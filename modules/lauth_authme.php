@@ -12,14 +12,15 @@
 
 lauth_modules_register(lauth::$_MODULES, "lauth_authme", basename(__FILE__));
 
-lauth_authme_init ();
+lauth_authme_init();
 
 if (!extension_loaded('hash')) {
     new  lauth_error("Phần mở rộng hash không hoạt động hoặc bị vô hiệu hóa", LAUTH_ERRO_ERROR);
 }
 
 if (lauth_modules_is_registered(lauth::$_MODULES, "lauth_mysql")) {
-    require_once "modules/lauth_mysql.php"; }
+    require_once "modules/lauth_mysql.php";
+}
 
 define("AUTHME_SHA256", 0);
 define("AUTHME_BCRYPT", 1);
@@ -29,18 +30,18 @@ define("AUTHME_ARGON2", 3);
 /**
  * Class LAuthHash
  */
-abstract class lauth_encrypt {
-
-    /**
-     * Giá trị đầu vào của muối
-     */
-    private $salt_length;
+abstract class lauth_encrypt
+{
 
     /**
      * Dãy kí tự mà muối có thể tạo
      * @var array
      */
     public $salt_chars;
+    /**
+     * Giá trị đầu vào của muối
+     */
+    private $salt_length;
 
     /**
      * Dùng để tạo mật khẩu hoặc kiểm tra mật khẩu của AuthMe
@@ -49,8 +50,18 @@ abstract class lauth_encrypt {
      */
     public function __construct($salt_length = 16)
     {
-        $this->salt_chars   =  $this->char_range();
-        $this->salt_length  =  $salt_length;
+        $this->salt_chars = $this->char_range();
+        $this->salt_length = $salt_length;
+    }
+
+    /**
+     * Chọn dãy dữ liệu cho muối
+     * @return array
+     * @since 1.0
+     */
+    protected function char_range()
+    {
+        return array_merge(range('0', '9'), range('a', 'f'));
     }
 
     /**
@@ -71,20 +82,12 @@ abstract class lauth_encrypt {
     public abstract function compare_password($password, $hash);
 
     /**
-     * Chọn dãy dữ liệu cho muối
-     * @return array
-     * @since 1.0
-     */
-    protected function char_range()  {
-        return array_merge(range('0', '9'), range('a', 'f'));
-    }
-
-    /**
      * Tạo muối cho mật khẩu đỡ nhạt =))
      * @return string
      * @since 1.0
      */
-    protected function generate_salt () {
+    protected function generate_salt()
+    {
         $maxCharIndex = count($this->salt_chars) - 1;
         $salt = '';
         for ($i = 0; $i < $this->salt_length; ++$i) {
@@ -95,9 +98,11 @@ abstract class lauth_encrypt {
 
 }
 
-class authme_sha256 extends lauth_encrypt {
+class authme_sha256 extends lauth_encrypt
+{
 
-    public function __construct () {
+    public function __construct()
+    {
         parent::__construct(16);
     }
 
@@ -110,7 +115,7 @@ class authme_sha256 extends lauth_encrypt {
     public function hash($password)
     {
         $salt = $this->generate_salt();
-        return "\$SHA$" . $salt . "$" . hash("sha256", hash('sha256', $password). $salt);
+        return "\$SHA$" . $salt . "$" . hash("sha256", hash('sha256', $password) . $salt);
     }
 
     /**
@@ -126,7 +131,9 @@ class authme_sha256 extends lauth_encrypt {
         return count($parts) === 4 && $parts[3] === hash('sha256', hash('sha256', $password) . $parts[2]);
     }
 }
-class  authme_bcrypt extends lauth_encrypt {
+
+class  authme_bcrypt extends lauth_encrypt
+{
 
 
     /**
@@ -152,7 +159,9 @@ class  authme_bcrypt extends lauth_encrypt {
         return password_verify($password, $hash);
     }
 }
-class authme_pbkdf2 extends lauth_encrypt {
+
+class authme_pbkdf2 extends lauth_encrypt
+{
 
     const ROUNDS = 10000;
 
@@ -174,6 +183,20 @@ class authme_pbkdf2 extends lauth_encrypt {
     }
 
     /**
+     * Tính số vòng hash
+     * @param $iterations
+     * @param $salt
+     * @param $password
+     * @return string
+     * @since 1.0
+     */
+    private function compute_hash($iterations, $salt, $password)
+    {
+        return 'pbkdf2_sha256$' . $iterations . '$' . $salt
+            . '$' . hash_pbkdf2('sha256', $password, $salt, self::ROUNDS, 64, false);
+    }
+
+    /**
      * So sánh xem mật khẩu có đúng với hash hay không
      * @param $password
      * @param $hash
@@ -185,21 +208,10 @@ class authme_pbkdf2 extends lauth_encrypt {
         $parts = explode('$', $hash);
         return count($parts) === 4 && $hash === $this->compute_hash($parts[1], $parts[2], $password);
     }
-
-    /**
-     * Tính số vòng hash
-     * @param $iterations
-     * @param $salt
-     * @param $password
-     * @return string
-     * @since 1.0
-     */
-    private function compute_hash($iterations, $salt, $password) {
-        return 'pbkdf2_sha256$' . $iterations . '$' . $salt
-            . '$' . hash_pbkdf2('sha256', $password, $salt, self::ROUNDS, 64, false);
-    }
 }
-class authme_argon2 extends lauth_encrypt {
+
+class authme_argon2 extends lauth_encrypt
+{
 
     /**
      * Mã hóa mật khẩu
@@ -231,31 +243,38 @@ class authme_argon2 extends lauth_encrypt {
  * @return authme_argon2|authme_bcrypt|authme_pbkdf2|authme_sha256|null
  * @since 1.0
  */
-function authme_objects ($type = AUTHME_SHA256) {
+function authme_objects($type = AUTHME_SHA256)
+{
     $object = null;
     switch ($type) {
-        case AUTHME_SHA256: {
+        case AUTHME_SHA256:
+        {
             $object = new authme_sha256();
             break;
         }
-        case AUTHME_BCRYPT: {
+        case AUTHME_BCRYPT:
+        {
             $object = new authme_bcrypt();
             break;
         }
-        case AUTHME_PBKDF2: {
+        case AUTHME_PBKDF2:
+        {
             $object = new authme_pbkdf2();
             break;
         }
-        case AUTHME_ARGON2: {
+        case AUTHME_ARGON2:
+        {
             $object = new authme_argon2();
             break;
         }
-        default: {
+        default:
+        {
             break;
         }
     }
     return $object;
 }
+
 /**
  * Trả giá trị hash
  * @param $password
@@ -263,7 +282,8 @@ function authme_objects ($type = AUTHME_SHA256) {
  * @return mixed
  * @since 1.0
  */
-function authme_hash ($password, $type = AUTHME_SHA256) {
+function authme_hash($password, $type = AUTHME_SHA256)
+{
     $object = authme_objects($type);
     return $object->hash($password);
 }
@@ -276,7 +296,8 @@ function authme_hash ($password, $type = AUTHME_SHA256) {
  * @return mixed
  * @since 1.0
  */
-function authme_verify($password, $hash, $type = AUTHME_SHA256) {
+function authme_verify($password, $hash, $type = AUTHME_SHA256)
+{
     $object = authme_objects($type);
     return $object->compare_password($password, $hash);
 }
@@ -285,19 +306,22 @@ function authme_verify($password, $hash, $type = AUTHME_SHA256) {
  *
  * @since 1.0
  */
-function lauth_authme_init() {
+function lauth_authme_init()
+{
     if (!isset($_SESSION['_logged'])) {
-        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập"=>"login.php", "Đăng ký"=>"register.php"]);
+        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "login.php", "Đăng ký" => "register.php"]);
     } else {
 
     }
 }
+
 /**
  * Kiểm tra xem đã đăng nhập hay chưa
  * @return bool
  * @since 1.0
  */
-function lauth_is_logged()  {
+function lauth_is_logged()
+{
     return lauth_sessions_isset("_logged")
         && lauth_sessions_get("_logged") == true;
 }

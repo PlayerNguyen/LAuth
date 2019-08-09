@@ -7,14 +7,17 @@
 
 require_once "includes.php";
 
-var_dump($_GET);
+if (!lauth_sessions_isset("_admin_logged") || lauth_sessions_get("_admin_logged") != 1) {
+    redirect("index.php");
+}
 
 /**
  * Phân loại
  * @param $sub
  * @since 1.0
  */
-function active_at ($sub) {
+function active_at($sub)
+{
     if (isset($_GET[$sub])) echo "active";
 }
 
@@ -22,7 +25,8 @@ function active_at ($sub) {
  * @return mixed|null
  * @since 1.0
  */
-function get_category () {
+function get_category()
+{
     if (!isset($_GET['category'])) return null;
     else  return $_GET['category'];
 }
@@ -56,30 +60,33 @@ function get_category () {
 </head>
 <body>
 
-    <?php lauth_navbar_admin_load(); ?>
+<?php lauth_navbar_admin_load(); ?>
 
-    <div class="container-board mt-m-5 p-1">
-        <div class="display-flex" role="group" >
-            <ul class="list-group w-25" id="right-list-admin" role="group">
-                <li class="list-group-item <?php if (get_category() == null || get_category() == LAUTH_SETTINGS_CATEGORY_DEFAULT) echo "active"; ?>"><a href="?category=0">Cài đặt chính</a></li>
-                <li class="list-group-item"><a href="?category=1">ReCaptcha</a></li>
-                <li class="list-group-item"><a href="">Cài đặt chính</a></li>
-            </ul>
-            <div class="container w-75 bg-white shadowing p-3">
-                <?php if (get_category() == null || get_category() == LAUTH_SETTINGS_CATEGORY_DEFAULT) { ?>
-                    <h3 class="title-normal">Cài đặt chính</h3>
-                    <form action="" role="form" class="form">
-                        <table class="table p-3 w-100">
-                            <tr class="table-group">
-                                <td><p>Tên bảng AuthMe</p><small class="form-small-text">Tên bảng của AuthMe</small></td>
-                                <td><input type="text" value="<?php echo lauth_settings_get(lauth::$_MYSQL, "authme_table") ?>" name="authme-table" class="form-control" title="Tên bảng của AuthMe"></td>
-                            </tr>
-                        </table>
-                    </form>
-                <?php } ?>
-            </div>
+<div class="container-board mt-m-5 p-1">
+    <div class="display-flex" role="group">
+        <ul class="list-group w-25" id="right-list-admin" role="group">
+            <li class="list-group-item <?php if (get_category() == null || get_category() == LAUTH_SETTINGS_CATEGORY_DEFAULT) echo "active"; ?>">
+                <a href="?category=0">Cài đặt chính</a></li>
+            <li class="list-group-item"><a href="?category=1">ReCaptcha</a></li>
+            <li class="list-group-item"><a href="">Cài đặt chính</a></li>
+        </ul>
+        <div class="container w-75 bg-white shadowing p-3">
+            <?php if (get_category() == null || get_category() == LAUTH_SETTINGS_CATEGORY_DEFAULT) { ?>
+                <h3 class="title-normal">Cài đặt chính</h3>
+                <form action="" role="form" class="form">
+                    <table class="table p-3 w-100">
+                        <tr class="table-group">
+                            <td><p>Tên bảng AuthMe</p><small class="form-small-text">Tên bảng của AuthMe</small></td>
+                            <td><input type="text"
+                                       value="<?php echo lauth_settings_get(lauth::$_MYSQL, "authme_table") ?>"
+                                       name="authme-table" class="form-control" title="Tên bảng của AuthMe"></td>
+                        </tr>
+                    </table>
+                </form>
+            <?php } ?>
         </div>
     </div>
+</div>
 
 </body>
 </html>

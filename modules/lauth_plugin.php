@@ -12,7 +12,8 @@ lauth_modules_register(lauth::$_MODULES, "lauth_plugin", basename(__FILE__));
  * Interface Plugin
  * @since 1.0
  */
-interface Plugin {
+interface Plugin
+{
 
     public function name();
 
@@ -21,6 +22,8 @@ interface Plugin {
     public function author();
 
 }
-abstract class Listener {
+
+abstract class Listener
+{
     public abstract function callEvent();
 }

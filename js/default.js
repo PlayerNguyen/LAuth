@@ -15,7 +15,7 @@ let screen_width;
  * Is mobile mode or not
  */
 function mobile_init() {
-    screen_width =  $(document).width();
+    screen_width = $(document).width();
 
     is_mobile = screen_width <= MOBILE_MAX_WIDTH;
     $(window).resize(() => {
@@ -27,7 +27,7 @@ function mobile_init() {
 /**
  * On the document was loaded
  */
-$(document).ready(()=>{
+$(document).ready(() => {
     mobile_init();
     dismiss_init();
     navbar_mobile_init();
@@ -37,12 +37,13 @@ $(document).ready(()=>{
  * Adding event of dismiss button for alert
  */
 function dismiss_init() {
-    let dismiss  = $('.alert-dismiss');
-    dismiss.click(()=>{
+    let dismiss = $('.alert-dismiss');
+    dismiss.click(() => {
         let _parent = dismiss.parent();
-        if (_parent != null) _parent.slideUp(ANIMATION_MILLI_SECOND  / 3);
+        if (_parent != null) _parent.slideUp(ANIMATION_MILLI_SECOND / 3);
     });
 }
+
 /**
  * Add mobile process navbar
  */
@@ -51,10 +52,12 @@ function navbar_mobile_init() {
      * Collapse init
      */
     let collapser = $(".navbar-collapse");
-    let collapsible  = collapser.parent().parent();
+    let collapsible = collapser.parent().parent();
     let contents = collapsible.find(".navbar-content");
-    if (!collapsible.hasClass("collapsible")) { console.warn("Đối tượng " + collapsible.html() + " không có class=collapsible") }
-    collapser.click (() => {
+    if (!collapsible.hasClass("collapsible")) {
+        console.warn("Đối tượng " + collapsible.html() + " không có class=collapsible")
+    }
+    collapser.click(() => {
         if ($(contents).is(":hidden")) show_navbar_contents();
         else hide_navbar_contents();
     });
@@ -65,7 +68,7 @@ function navbar_mobile_init() {
         if (!is_mobile) {
             if ($(contents).is(":hidden")) show_navbar_contents();
         } else {
-            if (!($(contents).is(":hidden")))  hide_navbar_contents();
+            if (!($(contents).is(":hidden"))) hide_navbar_contents();
         }
     });
     /**
@@ -73,32 +76,37 @@ function navbar_mobile_init() {
      */
     let dropdown_contents = $('.dropdown-content');
     for (let i = 0; i < dropdown_contents.length; i++) {
-        let contents    = $(dropdown_contents[i]);
-        let parent      = $(dropdown_contents[i]).parent();
-        let children    = $(dropdown_contents[i]).children();
+        let contents = $(dropdown_contents[i]);
+        let parent = $(dropdown_contents[i]).parent();
+        let children = $(dropdown_contents[i]).children();
         /**
          * Parents
          */
         parent.hover(() => {
             contents.slideDown(ANIMATION_MILLI_SECOND / 5);
-        }, () =>  {
+        }, () => {
             contents.slideUp(ANIMATION_MILLI_SECOND / 5);
         });
         /**
          * Set focusable
          */
         parent.attr("tabindex", 0);
-        $("*").focus((e)=>{
+        $("*").focus((e) => {
 
-            if (e.target === parent[0] || e.relatedTarget === parent[0]) { contents.slideDown(ANIMATION_MILLI_SECOND / 5); }
-            else  {contents.slideUp(ANIMATION_MILLI_SECOND / 5);}
+            if (e.target === parent[0] || e.relatedTarget === parent[0]) {
+                contents.slideDown(ANIMATION_MILLI_SECOND / 5);
+            } else {
+                contents.slideUp(ANIMATION_MILLI_SECOND / 5);
+            }
         });
-        parent.focusout((e) => { });
+        parent.focusout((e) => {
+        });
     }
 
     function show_navbar_contents() {
         contents.show(ANIMATION_MILLI_SECOND / 4);
     }
+
     function hide_navbar_contents() {
         contents.hide(ANIMATION_MILLI_SECOND / 4);
     }
@@ -111,11 +119,13 @@ function navbar_mobile_init() {
  * @param sufix
  * @returns {string}
  */
-function rand_string(len, prefix = '',  sufix = '') {
+function rand_string(len, prefix = '', sufix = '') {
     let chars = "ABCDEFGHIJKLMNOPSWXYZabdefghijklmnopswxyz1234567890_-?{}[]";
     let build = prefix + "";
-    for (let i = 0; i < len; i++) { build += chars[rand_integer(chars.length)]; }
-    if (sufix === '') build +=  sufix;
+    for (let i = 0; i < len; i++) {
+        build += chars[rand_integer(chars.length)];
+    }
+    if (sufix === '') build += sufix;
     return build;
 }
 

@@ -11,7 +11,6 @@
 require_once "includes.php";
 
 
-
 ?>
 <!doctype html>
 <html lang="vi">
@@ -27,9 +26,9 @@ require_once "includes.php";
     <title>Giấy phép sử dụng LAuth</title>
 </head>
 <body>
-    <div>
-        Giấy phép
-    </div>
+<div>
+    Giấy phép
+</div>
 </body>
 </html>
 
