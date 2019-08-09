@@ -4,4 +4,4 @@ LAuth là giao diện trang chủ mã nguồn mở cho các máy chủ Minecraft
 Đầu tiên, hãy chắc chắn rằng bạn đã có server Spigot (Bukkit, CraftBukkit) và đã được thiết lập hoàn chỉnh máy chủ đó.
 
 LAuth <b>Yêu cầu <a href='https://www.spigotmc.org/resources/authmereloaded.6269/'>AuthMeReloaded</a></b> để hoạt động cho việc quản lý tài khoản
-
+< To be continue >
