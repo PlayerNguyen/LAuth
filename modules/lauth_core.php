@@ -136,7 +136,13 @@ class lauth_error
  */
 abstract class lauth_task
 {
+    /**
+     * Search as the name (key)
+     */
     const SEARCH_NAME = 0;
+    /**
+     * Search as the value
+     */
     const SEARCH_VALUE = 1;
     /**
      * The tasks list
@@ -151,9 +157,10 @@ abstract class lauth_task
      * @return mixed giá trị của biến object
      * @since 1.0
      */
-    public function add($name, $object)
-    {
-        return $this->_TASK[$name] = $object;
+    public function add($name, $object) {
+        $adding = $this->_TASK[$name] = $object;
+        ksort($this->_TASK);
+        return $adding;
     }
 
     /**
@@ -162,10 +169,7 @@ abstract class lauth_task
      * @return mixed
      * @since 1.0
      */
-    public function get($index)
-    {
-        return $this->_TASK[$index];
-    }
+    public function get($index) { return $this->_TASK[$index]; }
 
     /**
      * Tìm kiếm với thời gian O(n) (linear search)
@@ -317,8 +321,10 @@ function lauth_navbar_load()
     $_SERVERNAME = LAUTH_SERVER_NAME;
     $_HOMEPAGE = LAUTH_SERVER_URL;
 
+    lauth_error_check();
+
     $html = "<!-- Navbar -->";
-    $html .= "<nav class='navbar bg-white collapsible' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
+    $html .= "<nav class='navbar bg-white collapsible' id='navbar' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
     $html .= "<div class='navbar-content'>";
     foreach (lauth_navbar_registered(lauth::$_NAVBAR) as $key => $navbar_item) {
         if (is_array($navbar_item)) {
@@ -357,8 +363,10 @@ function lauth_navbar_admin_load()
     $_SERVERNAME = LAUTH_SERVER_NAME;
     $_HOMEPAGE = LAUTH_SERVER_URL;
 
+    lauth_error_check();
+
     $html = "<!-- Administrative navbar -->";
-    $html .= "<nav class='navbar bg-white collapsible' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
+    $html .= "<nav class='navbar bg-white collapsible' id='admin-navbar' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
     $html .= "<div class='navbar-content'>";
     foreach (lauth_navbar_registered(lauth::$_NAVBAR) as $key => $navbar_item) {
         if (is_array($navbar_item)) {
@@ -384,6 +392,25 @@ function lauth_navbar_admin_load()
     $html .= "</nav>";
 
     echo $html;
+}
+
+function lauth_error_check()  {
+    // Kiểm tra lỗi của cài đặt
+    // MySQL
+    # Kiểm tra bảng AuthMe
+    $authme_table = lauth_settings_get(lauth::$_MYSQL, "authme_table");
+    if (!lauth_mysql_table_isset(lauth::$_MYSQL, $authme_table)) {
+        display_alert("Không tìm thấy bảng `{$authme_table}` của AuthMe", LAUTH_ALERT_WARN);
+    }
+    # Kiểm tra reCaptcha
+    $is_enable_recaptcha = lauth_settings_get(lauth::$_MYSQL,  "recaptcha_enable");
+    if  ($is_enable_recaptcha) {
+        $secret_key = lauth_settings_get(lauth::$_MYSQL, "recaptcha_secret_key");
+        $site_key   = lauth_settings_get(lauth::$_MYSQL, "recaptcha_site_key");
+        if ($secret_key == '' ||  $site_key == '') {
+            display_alert("ReCaptcha: secret key hoặc site key chưa được thiết lập", LAUTH_ALERT_WARN);
+        }
+    }
 }
 
 /**
@@ -438,18 +465,20 @@ function js_load($file)
     echo "<script src='{$file}' type='text/javascript'></script>";
 }
 
-define("LAUTH_ALERT_FINE", 'fine');
-define("LAUTH_ALERT_ERROR", 'error');
-define("LAUTH_ALERT_PRIMARY", 'primary');
+define("LAUTH_ALERT_FINE",      'fine');
+define("LAUTH_ALERT_ERROR",     'error');
+define("LAUTH_ALERT_WARN",      'warn');
+define("LAUTH_ALERT_PRIMARY",   'primary');
 /**
  * Hiển thị thanh thông báo
  * @param $message string nội dung cần thông báo
  * @param $type string loại thông báo
+ * @param string $custom_class
  * @since 1.0
  */
-function display_alert($message, $type)
+function display_alert($message, $type, $custom_class = "")
 {
-    echo "<div class='alert alert-{$type}' role='alert'><div class='w-100'>{$message}</div><button class='alert-dismiss' aria-label='Đóng thông báo'>&times;</button></div>";
+    echo "<div class='alert alert-{$type} {$custom_class}' role='alert'><div class='w-100'>{$message}</div><button class='alert-dismiss' aria-label='Đóng thông báo'>&times;</button></div>";
 }
 
 /**
@@ -576,6 +605,28 @@ function lauth_settings_category_init()
 }
 
 /**
+ * @param $task lauth_settings_category
+ * @param $id
+ * @return array|null
+ * @since 1.0
+ */
+function lauth_settings_category_by_id ($task, $id) {
+    foreach ($task->_TASK as $k=>$v) {
+        if ($v[0] == $id) return $task->_TASK[$k];
+    }
+    return null;
+}
+
+/**
+ * @param $task lauth_settings_category
+ * @param $id
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_settings_category_string_name ($task, $id) {
+    return lauth_settings_category_by_id($task, $id)[1];
+}
+/**
  * Dùng để lưu trữ những cài đặt mặc định và đăng ký nếu không tìm thấy
  * cài đặt đó trong máy chủ CSDL
  *
@@ -600,7 +651,6 @@ function lauth_settings_default_init()
     lauth::$_DEFAULT_SETTINGS = $init;
     return $init;
 }
-
 /**
  * Sinh chuỗi ngẫu nhiên
  * @param $length
@@ -648,9 +698,9 @@ function salty($password)
 function salty_verify($password, $hash)
 {
     $exps = explode('$', $hash);
-    $salt = $exps[2];
-    $hash = $exps[3];
+    $salt = $exps[2]; $hash = $exps[3];
     $verify = salty_hash($password, $salt);
+
     if ($verify === $hash) return true;
     return false;
 }

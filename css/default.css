@@ -191,6 +191,9 @@ body {
     .btn-error, .alert-error {
         background: #ffa29c;
     }
+    .btn-warn, .alert-warn  {
+        background: #dbd97d;
+    }
     .btn-transparent {
         background: transparent;
     }

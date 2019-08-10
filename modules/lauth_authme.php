@@ -311,7 +311,7 @@ function lauth_authme_init()
     if (!isset($_SESSION['_logged'])) {
         lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "login.php", "Đăng ký" => "register.php"]);
     } else {
-
+        lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get("lauth_logged_username"), ["Đăng xuất" => "login.php", "Đăng ký" => "register.php"]);
     }
 }
 
@@ -322,6 +322,14 @@ function lauth_authme_init()
  */
 function lauth_is_logged()
 {
-    return lauth_sessions_isset("_logged")
-        && lauth_sessions_get("_logged") == true;
+    return lauth_sessions_isset("lauth_logged")
+        && lauth_sessions_get("lauth_logged") == true;
+}
+
+/**
+ * Kiểm tra xem bảng AuthMe đã đăng ký hay chưa
+ * @since 1.0
+ */
+function lauth_table_is_authme_registered( ) {
+
 }

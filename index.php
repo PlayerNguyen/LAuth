@@ -9,12 +9,6 @@ require_once "includes.php";
 
 if (!is_setup()) header("Location: setup.php");
 
-/**
- * TODO
- * - Thêm phần mysql của settings như lauth_settings_add, lauth_settings_set
- * - Thêm phần cài đặt AuthMe
- */
-
 
 ?>
 <!doctype html>

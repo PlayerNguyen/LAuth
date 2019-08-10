@@ -145,19 +145,38 @@ function lauth_mysql_insert($link, $insertTable, $insertWhat, $values = [])
 }
 
 /**
+ * @param $link lauth_mysql
+ * @param $key
+ * @param $value
+ * @param $category
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
+function lauth_settings_update ($link, $key, $value, $category) {
+    $_t = LAUTH_TABLE_SETTINGS;
+    $key =  addslashes($key); $value = addslashes($value); $category = addslashes($category);
+    return lauth_mysql_query($link, /** @lang text */ "UPDATE `{$_t}` SET `key` = '{$key}', `value`='{$value}', `category` = '{$category}' WHERE `key` = '$key'; ");
+}
+
+/**
  * Thêm phần cài đặt mặc định
  * @param $link lauth_mysql
  * @param $key string
  * @param $value string
+ * @param int $category string|int
+ * @param $string_name string
+ * @param $small_text string
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_set_default($link, $key, $value, $category = LAUTH_SETTINGS_CATEGORY_DEFAULT_ID)
+function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text)
 {
-    $_t = LAUTH_TABLE_SETTINGS;
-    $key = addslashes($key);
-    $value = addslashes($value);
-    if (lauth_mysql_select($link, "`key`", $_t, "`key`='$key'")->num_rows <= 0) return lauth_mysql_query($link, /** @lang text */ "INSERT INTO $_t (`key`, `value`, `category`) VALUES ('{$key}', '{$value}', '{$category}');");
+    $_t             = LAUTH_TABLE_SETTINGS;
+    $key            = addslashes($key);
+    $value          = addslashes($value);
+    $string_name    = addslashes(htmlentities($string_name));
+    $small_text     = addslashes(htmlentities($small_text));
+    if (lauth_mysql_select($link, "`key`", $_t, "`key`='$key'")->num_rows <= 0) return lauth_mysql_query($link, /** @lang text */ "INSERT INTO $_t (`key`, `value`, `category`, `string_name`, `small_text`) VALUES ('{$key}', '{$value}', '{$category}', '{$string_name}', '{$small_text}');");
     else return null;
 }
 
@@ -168,31 +187,33 @@ function lauth_settings_set_default($link, $key, $value, $category = LAUTH_SETTI
  */
 function lauth_settings_init($link)
 {
-    lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_table", "authme", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID);
+
+    lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_table", "authme", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Bảng chứa AuthMe", "Bảng dùng để chứa thông tin của plugin AuthMe. Dùng để đăng nhập cho web");
+    lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_hash_algorithm", "sha256", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Thuật băm của AuthMe",  "Thuật toán băm của AuthMe, bạn có thể xem thêm tại <a href='https://github.com/PlayerNguyen/LAuth'>đây</a>");
 
     // Tải ở task default settings
     foreach (lauth::$_DEFAULT_SETTINGS->_TASK as $key => $value) {
         $name = $key;
-        $val = $value["value"];
-        $category = $value["category"];
-        lauth_settings_set_default($link, $name, strval($val), strval($category));
+        $val = $value["value"]; $category = $value["category"]; $string_name = $value["string_name"]; $small_text = $value["small_text"];
+        lauth_settings_set_default($link, $name, strval($val), strval($category), strval($string_name), strval($small_text));
     }
 }
 
 /**
  * @param $link lauth_mysql
  * @param $key
- * @return null
+ * @param string $what
+ * @return mixed
  * @since 1.0
  */
-function lauth_settings_get($link, $key)
+function lauth_settings_get($link, $key, $what = 'value')
 {
 
     $_t = LAUTH_TABLE_SETTINGS;
-    $selector = lauth_mysql_select($link, "`value`", $_t, "`key`='{$key}'");
+    $selector = lauth_mysql_select($link, "`{$what}`", $_t, "`key`='{$key}'");
 
     if ($selector->num_rows <= 0) return null;
-    else return $selector->fetch_assoc()['value'];
+    else return $selector->fetch_assoc()[$what];
 }
 
 /**
@@ -221,21 +242,25 @@ function lauth_settings_get_key_by_category($link, $category = LAUTH_SETTINGS_CA
 
 /**
  *
+ * Dùng để đăng ký những cài đặt mặc định trong LAuth
+ *
  * @param $task lauth_default_settings task default
- * @param $key
+ * @param $key string
  * @param $value
  * @param $category
+ * @param $string_name
+ * @param $small_text
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_default_register($task, $key, $value, $category)
+function lauth_settings_default_register($task, $key, $value, $category, $string_name, $small_text)
 {
-    return $task->add($key, ["value" => $value, "category" => $category]);
+    return $task->add($key, ["value" => $value, "category" => $category, "string_name"=>$string_name, "small_text"=>$small_text]);
 }
 
 /**
  *
- * Đăng ký category của cài đặt trang quản trị
+ * Đăng ký thể loại của cài đặt trong trang quản trị
  *
  * @param $task lauth_settings_category
  * @param $name

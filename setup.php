@@ -51,56 +51,65 @@ require_once "modules/lauth_mysql.php";
         return;
     }
     ?>
-    <?php if (isset($_POST['setup'])) {
 
-        if (empty($_POST['server-name']) || empty($_POST['server-url']) || empty($_POST['admin-username']) || empty($_POST['mysql-host']) || empty($_POST['mysql-port']) || empty($_POST['mysql-username']) || empty($_POST['mysql-password']) || empty($_POST['mysql-database'])) {
-            display_alert("Bạn chưa nhập đầy đủ thông tin, hãy chắc chắn rằng bạn nhập đủ thông tin", LAUTH_ALERT_ERROR);
-        } else {
-            $mysqli = @new lauth_mysql($_POST['mysql-host'], $_POST['mysql-username'], $_POST['mysql-password'], $_POST['mysql-database'], $_POST['mysql-port']);
-            if ($mysqli->connect_errno != 0) display_alert("Lỗi khi kết nối đến MySQL, lỗi {$mysqli->connect_error}", LAUTH_ALERT_ERROR);
-            else {
-                $password_admin = salty($_POST['admin-password']);
-                $file = lauth_files_create(LAUTH_FILE_CONFIG, join("\n",
-                        [
-                            "<?php",
-                            "define('LAUTH_SERVER_NAME',    '{$_POST['server-name']}');",
-                            "define('LAUTH_SERVER_URL',     '{$_POST['server-url']}');",
-                            "define('LAUTH_MYSQL_HOST',     '{$_POST['mysql-host']}');",
-                            "define('LAUTH_MYSQL_PORT',     '{$_POST['mysql-port']}');",
-                            "define('LAUTH_MYSQL_USERNAME', '{$_POST['mysql-username']}');",
-                            "define('LAUTH_MYSQL_PASSWORD', '{$_POST['mysql-password']}');",
-                            "define('LAUTH_MYSQL_DATABASE', '{$_POST['mysql-database']}');",
-                            "/** Tài khoản quản trị */",
-                            "define('LAUTH_ADMIN_USERNAME', '{$_POST['admin-username']}');",
-                            "define('LAUTH_ADMIN_PASSWORD', '{$password_admin}');"
-                        ])
-                );
+    <div class="container bg-white bs-border-box p-3 animated slideInUp mobile-w-100" id="setup-box">
 
-                if (!$file) {
-                    display_alert("Không thể tạo hoặc ghi tệp thiết lập", LAUTH_ALERT_ERROR);
-                } else {
-                    $lauth_settings = lauth_mysql_table_create($mysqli, LAUTH_TABLE_SETTINGS, [
-                        "`id` INT (32) NOT NULL AUTO_INCREMENT",
-                        "`key` VARCHAR(255) NOT NULL",
-                        "`value` VARCHAR(255) NOT NULL",
-                        "`category` VARCHAR(255) NOT NULL DEFAULT 'default'",
-                        "PRIMARY KEY (`id`)"
-                    ]);
+        <?php if (isset($_POST['setup'])) {
 
-                    //lauth_settings_set_default($mysqli, "");
+            if (empty($_POST['server-name']) || empty($_POST['server-url']) || empty($_POST['admin-username']) || empty($_POST['mysql-host']) || empty($_POST['mysql-port']) || empty($_POST['mysql-username']) || empty($_POST['mysql-password']) || empty($_POST['mysql-database'])) {
+                display_alert("Bạn chưa nhập đầy đủ thông tin, hãy chắc chắn rằng bạn nhập đủ thông tin", LAUTH_ALERT_ERROR);
+            } else {
+                $mysqli = @new lauth_mysql($_POST['mysql-host'], $_POST['mysql-username'], $_POST['mysql-password'], $_POST['mysql-database'], $_POST['mysql-port']);
+                if ($mysqli->connect_errno != 0)
+                    display_alert("Lỗi khi kết nối đến MySQL, lỗi {$mysqli->connect_error}", LAUTH_ALERT_ERROR);
+                else {
+                    $password_admin = salty($_POST['admin-password']);
+                    $file = lauth_files_create(LAUTH_FILE_CONFIG, join("\n",
+                            [
+                                "<?php",
+                                "define('LAUTH_SERVER_NAME',    '{$_POST['server-name']}');",
+                                "define('LAUTH_SERVER_URL',     '{$_POST['server-url']}');",
+                                "define('LAUTH_MYSQL_HOST',     '{$_POST['mysql-host']}');",
+                                "define('LAUTH_MYSQL_PORT',     '{$_POST['mysql-port']}');",
+                                "define('LAUTH_MYSQL_USERNAME', '{$_POST['mysql-username']}');",
+                                "define('LAUTH_MYSQL_PASSWORD', '{$_POST['mysql-password']}');",
+                                "define('LAUTH_MYSQL_DATABASE', '{$_POST['mysql-database']}');",
+                                "/** Tài khoản quản trị */",
+                                "define('LAUTH_ADMIN_USERNAME', '{$_POST['admin-username']}');",
+                                "define('LAUTH_ADMIN_PASSWORD', '{$password_admin}');"
+                            ])
+                    );
 
-                    lauth_settings_init($mysqli);
+                    if (!$file) {
+                        display_alert("Không thể tạo hoặc ghi tệp thiết lập", LAUTH_ALERT_ERROR);
+                    } else {
+                        $lauth_settings = lauth_mysql_table_create($mysqli, LAUTH_TABLE_SETTINGS, [
+                            "`id` INT (32) NOT NULL AUTO_INCREMENT",
+                            "`key` VARCHAR(255) NOT NULL",
+                            "`value` VARCHAR(255) NOT NULL",
+                            "`category` VARCHAR(255) NOT NULL DEFAULT '0'",
+                            "`string_name` VARCHAR(255) NOT NULL",
+                            "`small_text` VARCHAR(255) NOT NULL",
+                            "PRIMARY KEY (`id`)"
+                        ]);
 
-                    if ($lauth_settings) display_alert("Thiết lập thành công. <a href='index.php'>Trở về trang chủ</a>", LAUTH_ALERT_FINE);
-                    else {
-                        display_alert("Không thể tạo bảng cài đặt của LAuth, lỗi: " . lauth_mysql_last_error(lauth::$_MYSQL), LAUTH_ALERT_ERROR);
+                        lauth_settings_default_init();
+
+                        lauth_settings_init($mysqli);
+
+                        if ($lauth_settings) {
+                            display_alert("Thiết lập thành công. <a href='index.php'>Trở về trang chủ</a>", LAUTH_ALERT_FINE);
+                            delay_redirect("index.php", 3);
+                        }
+                        else {
+                            display_alert("Không thể tạo bảng cài đặt của LAuth, lỗi: " . lauth_mysql_last_error(lauth::$_MYSQL), LAUTH_ALERT_ERROR);
+                        }
                     }
                 }
             }
-        }
 
-    } ?>
-    <div class="container bg-white bs-border-box p-3 animated slideInUp mobile-w-100" id="setup-box">
+        } ?>
+
         <h1 class="title-normal c-black">Thiết lập</h1>
         <i style="<?php if (is_valid_php_version(LAUTH_PHP_VERSION_REQUEST)) echo "color:#76ecb0;"; else echo "color:#ec7676;"; ?>">Yêu
             cầu <b>PHP <?php echo LAUTH_PHP_VERSION_REQUEST ?></b> trở lên. Bạn đang ở phiên

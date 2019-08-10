@@ -62,11 +62,10 @@ if (is_setup()) {
     // MySQL
     lauth_mysql_init();
     lauth_settings_init(lauth::$_MYSQL);
-
+    lauth_settings_category_register(lauth::$_SETTINGS_CATEGORY, "default", "Cài đặt chung", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID);
 } else {
     if (request_url() != 'setup.php') {
         redirect("setup.php");
     }
 }
 
-lauth_settings_category_register(lauth::$_SETTINGS_CATEGORY, "default", "Cài đặt chung", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID);
