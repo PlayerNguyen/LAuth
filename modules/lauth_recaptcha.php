@@ -36,25 +36,32 @@ if (is_setup() && lauth_modules_is_registered(lauth::$_MODULES, "lauth_mysql")) 
      */
     function lauth_recaptcha_is_enabled()
     {
-        return lauth_settings_get(lauth::$_MYSQL, "recaptcha_enable");
+        return lauth_settings_get(lauth::$_MYSQL, "recaptcha_enable") === "1"
+            && lauth_settings_get(lauth::$_MYSQL, "recaptcha_site_key") != ''
+            && lauth_settings_get(lauth::$_MYSQL, "recaptcha_secret_key") != '';
     }
 
     /**
-     * Dùng để tải reCaptcha trong form, gọi ngay đít và nhớ thêm input có id recaptcha-id
+     * Dùng để tải reCaptcha trong form
+     *
      * @param $action
      * @since 1.0
      */
     function lauth_recaptcha_form_load($action)
     {
+        if (lauth_recaptcha_is_enabled())  {
+            echo "<input type='hidden' id='recaptcha-id' name='token' />";
+            $site_key = lauth_settings_get(lauth::$_MYSQL, "recaptcha_site_key");
 
-        $site_key = lauth_settings_get(lauth::$_MYSQL, "recaptcha_site_key");
-
-        echo "<script src='" . RECAPTCHA_SCRIPTS_SRC . "{$site_key}'></script> <script>grecaptcha.ready(function() {
+            echo "<script src='" . RECAPTCHA_SCRIPTS_SRC . "{$site_key}'></script> <script>grecaptcha.ready(function() {
           grecaptcha.execute('{$site_key}', {action: '{$action}'}).then(function(token) {
              let _recaptcha = document.getElementById('recaptcha-id');
              if (_recaptcha ==  null) console.error('Không thấy object có id recaptcha-id khi load recaptcha');
              else _recaptcha.value = token;
           });});</script>";
+        } else {
+            new lauth_error("reCaptcha chưa được bật, bật trong admin", LAUTH_ERRO_WARN);
+        }
     }
 
     /**

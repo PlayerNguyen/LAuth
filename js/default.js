@@ -45,6 +45,23 @@ function dismiss_init() {
 }
 
 /**
+ * Dùng để sinh ngẫu nhiên một chuỗi
+ * @param len
+ * @param prefix
+ * @param sufix
+ * @returns {string}
+ */
+function rand_string(len, prefix = '', sufix = '') {
+    let chars = "ABCDEFGHIJKLMNOPSWXYZabdefghijklmnopswxyz1234567890_-?{}[]";
+    let build = prefix + "";
+    for (let i = 0; i < len; i++) {
+        build += chars[rand_integer(chars.length)];
+    }
+    if (sufix === '') build += sufix;
+    return build;
+}
+
+/**
  * Add mobile process navbar
  */
 function navbar_mobile_init() {
@@ -71,6 +88,9 @@ function navbar_mobile_init() {
             if (!($(contents).is(":hidden"))) hide_navbar_contents();
         }
     });
+
+    let old_parent;
+
     /**
      * Load dropdown
      */
@@ -79,28 +99,27 @@ function navbar_mobile_init() {
         let contents = $(dropdown_contents[i]);
         let parent = $(dropdown_contents[i]).parent();
         let children = $(dropdown_contents[i]).children();
+
+        contents.css("z-index", '1');
+        parent.attr("tabIndex", 0);
+
         /**
-         * Parents
+         * On focus and on click
          */
         parent.hover(() => {
-            contents.slideDown(ANIMATION_MILLI_SECOND / 5);
-        }, () => {
-            contents.slideUp(ANIMATION_MILLI_SECOND / 5);
+            contents.show(ANIMATION_MILLI_SECOND / 4);
+        }, ()=> {
+            contents.hide(ANIMATION_MILLI_SECOND / 4);
         });
-        /**
-         * Set focusable
-         */
-        parent.attr("tabindex", 0);
-        $("*").focus((e) => {
-
-            if (e.target === parent[0] || e.relatedTarget === parent[0]) {
-                contents.slideDown(ANIMATION_MILLI_SECOND / 5);
-            } else {
-                contents.slideUp(ANIMATION_MILLI_SECOND / 5);
+        parent.keydown ((e)=> {
+            contents.show(ANIMATION_MILLI_SECOND / 4)
+        });
+        parent.keydown((e)=> {
+            if (old_parent != null && e.currentTarget !== old_parent)  {
+                $(old_parent).children(".dropdown-content").hide(ANIMATION_MILLI_SECOND / 4);
             }
-        });
-        parent.focusout((e) => {
-        });
+            old_parent = e.currentTarget
+        })
     }
 
     function show_navbar_contents() {
@@ -110,23 +129,6 @@ function navbar_mobile_init() {
     function hide_navbar_contents() {
         contents.hide(ANIMATION_MILLI_SECOND / 4);
     }
-}
-
-/**
- * Dùng để sinh ngẫu nhiên một chuỗi
- * @param len
- * @param prefix
- * @param sufix
- * @returns {string}
- */
-function rand_string(len, prefix = '', sufix = '') {
-    let chars = "ABCDEFGHIJKLMNOPSWXYZabdefghijklmnopswxyz1234567890_-?{}[]";
-    let build = prefix + "";
-    for (let i = 0; i < len; i++) {
-        build += chars[rand_integer(chars.length)];
-    }
-    if (sufix === '') build += sufix;
-    return build;
 }
 
 /**

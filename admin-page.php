@@ -126,7 +126,7 @@ function get_category()
                 </table>
                 <input type="hidden" name="category" value="<?php echo get_category(); ?>">
                 <div class="rtl w-100" >
-                    <button type="submit" name="set"  class="btn btn-fine">Chỉnh sửa</button>
+                    <button type="submit" name="set"  class="btn btn-primary">Chỉnh sửa</button>
                 </div>
             </form>
         </div>

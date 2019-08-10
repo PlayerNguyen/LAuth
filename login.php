@@ -7,6 +7,7 @@
 
 require_once "includes.php";
 
+
 ?>
 <!doctype html>
 <html lang="vi">
@@ -33,33 +34,36 @@ require_once "includes.php";
 </head>
 <body>
 
-<?php lauth_navbar_load(); ?>
+    <?php lauth_navbar_load(); ?>
 
-<?php
-if (lauth_is_logged()) {
-    display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);
-    return;
-}
-?>
-<div class="container p-3 mt-m-5" id="login-div">
+    <?php if (lauth_is_logged()) {
+        display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);
+        return;
+    } ?>
+    <div class="container p-3 mt-m-5" id="login-div">
 
-    <h1 class="title-large">Đăng nhập</h1>
+        <?php if (isset($_POST['login']))  {
+            $login = lauth_login($_POST);
+            display_alert($login[0], $login[1]);
+        } ?>
 
-    <form action="" method="post" class="form">
-        <div class="form-group">
-            <label for="username">Tên tài khoản</label>
-            <input class="form-control" type="text" name="username" placeholder="Tên tài khoản Minecraft"
-                   title="Tên tài khoản Minecraft">
-        </div>
-        <div class="form-group">
-            <label for="password">Mật khẩu</label>
-            <input class="form-control" type="password" name="password" placeholder="Mật khẩu" title="Mật khẩu">
-        </div>
-        <div class="form-group rtl">
-            <button type="submit" class="btn btn-primary" name="setup">Đăng nhập</button>
-        </div>
-    </form>
-</div>
+        <h1 class="title-large">Đăng nhập</h1>
+        <form action="" method="post" class="form">
+            <div class="form-group">
+                <label for="username">Tên tài khoản</label>
+                <input class="form-control" type="text" name="username" placeholder="Tên tài khoản Minecraft"
+                       title="Tên tài khoản Minecraft">
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input class="form-control" type="password" name="password" placeholder="Mật khẩu" title="Mật khẩu">
+            </div>
+            <?php if (lauth_recaptcha_is_enabled()) { lauth_recaptcha_form_load('login'); } ?>
+            <div class="form-group rtl">
+                <button type="submit" class="btn btn-primary" name="login">Đăng nhập</button>
+            </div>
+        </form>
+    </div>
 
 </body>
 </html>

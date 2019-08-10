@@ -154,12 +154,13 @@ abstract class lauth_task
      *
      * @param $name string Tên của task đó
      * @param $object mixed object bạn muốn đưa vào
+     * @param bool $sort
      * @return mixed giá trị của biến object
      * @since 1.0
      */
-    public function add($name, $object) {
+    public function add($name, $object, $sort = false) {
         $adding = $this->_TASK[$name] = $object;
-        ksort($this->_TASK);
+        if ($sort) ksort($this->_TASK);
         return $adding;
     }
 
@@ -589,6 +590,18 @@ function delay_redirect($destination, $delay = 3)
 
 class lauth_settings_category extends lauth_task
 {
+
+    /**
+     * @param string $name
+     * @param mixed $object
+     * @param bool $sort
+     * @return mixed
+     * @since 1.0
+     */
+    public function add($name, $object, $sort = true) {
+        return parent::add($name, $object, $sort);
+    }
+
 }
 
 /**
@@ -703,4 +716,40 @@ function salty_verify($password, $hash)
 
     if ($verify === $hash) return true;
     return false;
+}
+
+/**
+ * Dùng để đăng nhập
+ * Gọi tại form đăng nhập
+ *
+ * @param $post_variables
+ * @return array|void
+ * @since 1.0
+ */
+function lauth_login ($post_variables) {
+    if (isset($post_variables['login'])) {
+        if (lauth_recaptcha_is_enabled()) {
+            $verify = lauth_recaptcha_verify_data($post_variables['token']);
+            if (is_array($verify)) { return [sprintf("Đã có lỗi khi xác thực recaptcha, những lỗi bao gồm %s", join(", ", $verify)), LAUTH_ALERT_ERROR]; }
+        }
+        if (empty($post_variables['password']) || empty($post_variables['username'])) {
+            return ["Thông tin bạn nhập bị thiếu, hãy thử nhập lại đầy đủ thông tin", LAUTH_ALERT_ERROR];
+        }
+        $username = addslashes($post_variables['username']);
+        $password = addslashes($post_variables['password']);
+        if (!lauth_authme_is_username_registered(lauth::$_MYSQL, $username)) {
+            return ["Tài khoản này không có trong cơ sở dữ liệu", LAUTH_ALERT_ERROR];
+        }
+        if (!lauth_password_check(lauth::$_MYSQL, $username, $password)) {
+            return ["Mật khẩu bạn nhập không chính xác", LAUTH_ALERT_ERROR];
+        }
+        lauth_sessions_set(LAUTH_SESSION_LOGGED,    true);
+        lauth_sessions_set(LAUTH_SESSION_LOGGED_USERNAME, $username);
+        delay_redirect(LAUTH_SERVER_URL, 3);
+        return ["Đăng nhập thành công. Bấm vào <a href='index.php'>đây</a> nếu trình duyệt không tự động chuyển", LAUTH_ALERT_FINE];
+    }
+}
+
+function lauth_seo_loader () {
+
 }

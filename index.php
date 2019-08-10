@@ -9,7 +9,7 @@ require_once "includes.php";
 
 if (!is_setup()) header("Location: setup.php");
 
-
+lauth_navbar_register(lauth::$_NAVBAR, "Có cái lồn nè", ['#'=>"???"])
 ?>
 <!doctype html>
 <html lang="vi">
