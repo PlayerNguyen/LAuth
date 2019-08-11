@@ -9,7 +9,6 @@ require_once "includes.php";
 
 if (!is_setup()) header("Location: setup.php");
 
-lauth_navbar_register(lauth::$_NAVBAR, "Có cái lồn nè", ['#'=>"???"])
 ?>
 <!doctype html>
 <html lang="vi">
@@ -25,7 +24,7 @@ lauth_navbar_register(lauth::$_NAVBAR, "Có cái lồn nè", ['#'=>"???"])
     <meta name="author" content="">
     <meta name="theme-color" content="">
     <!-- Request tags -->
-    <title><?php echo LAUTH_SERVER_NAME; ?></title>
+    <title><?=LAUTH_SERVER_NAME; ?></title>
     <?php
     # Load css
     css_load(LAUTH_FILE_CSS_DEFAULT);
@@ -40,21 +39,22 @@ lauth_navbar_register(lauth::$_NAVBAR, "Có cái lồn nè", ['#'=>"???"])
 <?php lauth_navbar_load(); ?>
 
 <div class="padding-content">
-    <h1 class="title-xhuge animated slideInUp text-center"><?php echo LAUTH_SERVER_NAME ?></h1>
+    <h1 class="title-huge wrapword animated slideInUp text-center c-white"><?= LAUTH_SERVER_NAME ?> đây</h1>
     <div class="container p-2 w-75" style="background: transparent;text-align: center">
-        <div class=" animated slideInUp" style="text-align: left">
-            <p class="c-white">
-                Chào, tớ là dòng mô tả về máy chủ của bạn. Bạn có thể chỉnh sửa nó trong phần <b>settings.php</b>. LAuth
-                là một dạng giao diện trang web (ứng dụng web) được hỗ trợ cho những máy chủ Minecraft với mục đích sử
-                dụng miễn phí. Bạn có thể sử dụng Lauth hoàn toàn miễn phí
-            </p>
-            <h3>Tính năng</h3>
-            <ul>
-                <li><b>Hỗ trợ AuthMe</b> (đăng nhập/đăng ký)</li>
-                <li><b>Hỗ trợ nạp thẻ</b></li>
-                <li><b>Dễ dàng sử dụng</b></li>
-                <li><b>...</b></li>
-            </ul>
+        <div class="display-flex">
+            <input
+                    type="text"
+                    class="form-control bg-transparent b-radius-0 c-white"
+                    title=""
+                    readonly
+                    aria-readonly="true"
+                    value="<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>"
+            >
+
+            <button type="button" class="btn btn-transparent" aria-label="Sao chép">📋</button>
+        </div>
+        <div class="c-white animated slideInUp" style="text-align: left">
+            <?= html_entity_decode(lauth_settings_get(lauth::$_MYSQL, "lauth_index_description")); ?>
         </div>
         <div class="">
             <a class="btn btn-transparent">Tài khoản</a>

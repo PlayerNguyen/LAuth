@@ -20,8 +20,7 @@ define("AUTHME_BCRYPT", 1);
 define("AUTHME_PBKDF2", 2);
 /** @deprecated  */
 define("AUTHME_ARGON2", 3);
-define("LAUTH_SESSION_LOGGED",          "lauth_logged");
-define("LAUTH_SESSION_LOGGED_USERNAME", "lauth_logged_username");
+
 
 if (!extension_loaded('hash')) {
     new  lauth_error("Phần mở rộng hash không hoạt động hoặc bị vô hiệu hóa", LAUTH_ERRO_ERROR);
@@ -320,7 +319,6 @@ function authme_verify_password($password, $hash)
 }
 
 /**
- *
  * Khởi tạo module lauth_authme.php
  *
  * @since 1.0
@@ -328,13 +326,11 @@ function authme_verify_password($password, $hash)
 function lauth_authme_init()
 {
     if (!lauth_is_logged()) {
-        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "login.php", "Đăng ký" => "register.php"]);
+        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "signin.php", "Đăng ký" => "register.php"]);
     } else {
-        lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME), ["Thông tin cá nhân" => "login.php", "Đăng ký" => "register.php"]);
+        lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME), ["Thông tin cá nhân" => "profile.php", "Đăng xuất" => "signout.php"]);
     }
 
-    var_dump($_SESSION);
-    lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME), ["Thông tin cá nhân" => "login.php", "Đăng ký" => "register.php"]);
 }
 
 /**

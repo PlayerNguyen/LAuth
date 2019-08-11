@@ -86,10 +86,12 @@ require_once "modules/lauth_mysql.php";
                         $lauth_settings = lauth_mysql_table_create($mysqli, LAUTH_TABLE_SETTINGS, [
                             "`id` INT (32) NOT NULL AUTO_INCREMENT",
                             "`key` VARCHAR(255) NOT NULL",
-                            "`value` VARCHAR(255) NOT NULL",
+                            "`value` TEXT NOT NULL",
                             "`category` VARCHAR(255) NOT NULL DEFAULT '0'",
-                            "`string_name` VARCHAR(255) NOT NULL",
-                            "`small_text` VARCHAR(255) NOT NULL",
+                            /** -------- */
+                            "`type` VARCHAR(255) NOT NULL DEFAULT 'text'",
+                            "`string_name` TEXT NOT NULL",
+                            "`small_text` TEXT NOT NULL",
                             "PRIMARY KEY (`id`)"
                         ]);
 

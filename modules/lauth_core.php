@@ -8,6 +8,15 @@
  * nên sẽ không cần register =)))
  */
 
+define("LAUTH_SETTINGS_TYPE_TEXT",          "text");
+define("LAUTH_SETTINGS_TYPE_PASSWORD",      "password");
+define("LAUTH_SETTINGS_TYPE_CHECKBOX",      "checkbox");
+define("LAUTH_SETTINGS_TYPE_LARGE_TEXT",    "largetext");
+
+define("LAUTH_SESSION_LOGGED",          "lauth_logged");
+define("LAUTH_SESSION_LOGGED_USERNAME", "lauth_logged_username");
+define("LAUTH_SESSION_LOGGED_ID",       "lauth_logged_id");
+
 /**
  * Request url
  * @return mixed
@@ -325,12 +334,12 @@ function lauth_navbar_load()
     lauth_error_check();
 
     $html = "<!-- Navbar -->";
-    $html .= "<nav class='navbar bg-white collapsible' id='navbar' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
+    $html .= "<nav class='navbar bg-white collapsible' id='navbar' role='navigation'><div class='navbar-show'><div class='navbar-item'><a class='display-flex' href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
     $html .= "<div class='navbar-content'>";
     foreach (lauth_navbar_registered(lauth::$_NAVBAR) as $key => $navbar_item) {
         if (is_array($navbar_item)) {
             $_TITLE = $key;
-            $html .= "<div class='dropdown navbar-item'><a class='dropdown-title'>{$_TITLE}</a><div class='dropdown-content'>";
+            $html .= "<div class='dropdown navbar-item'><a class='dropdown-title navbar-link'>{$_TITLE}</a><div class='dropdown-content'>";
             $counter = 0;
             foreach ($navbar_item as $key1 => $value1) {
                 if (empty($key1) || empty($value1)) {
@@ -339,12 +348,12 @@ function lauth_navbar_load()
                     );
                     continue;
                 }
-                $html .= "<a class='dropdown-item' href='{$value1}'>{$key1}</a>";
+                $html .= "<a class='dropdown-item navbar-link' href='{$value1}'>{$key1}</a>";
                 $counter++;
             }
             $html .= "</div></div>";
         } else {
-            $html .= "<div class='navbar-item'><a href='{$navbar_item}'>{$key}</a></div>";
+            $html .= "<div class='navbar-item'><a href='{$navbar_item}' class='navbar-link'>{$key}</a></div>";
         }
     }
     $html .= "</div>";
@@ -719,8 +728,9 @@ function salty_verify($password, $hash)
 }
 
 /**
- * Dùng để đăng nhập
- * Gọi tại form đăng nhập
+ * Dùng để đăng nhập trên form đăng nhập
+ *
+ * <i>LAuth sử dụng giao thức POST cho các form đăng nhập, đăng ký, quên mật khẩu...(bảo mật cao)</i>
  *
  * @param $post_variables
  * @return array|void
@@ -743,13 +753,31 @@ function lauth_login ($post_variables) {
         if (!lauth_password_check(lauth::$_MYSQL, $username, $password)) {
             return ["Mật khẩu bạn nhập không chính xác", LAUTH_ALERT_ERROR];
         }
-        lauth_sessions_set(LAUTH_SESSION_LOGGED,    true);
-        lauth_sessions_set(LAUTH_SESSION_LOGGED_USERNAME, $username);
+
+        $id = lauth_mysql_select(lauth::$_MYSQL, "id", lauth_authme_table(lauth::$_MYSQL), "`username`='{$username}'");
+
+        lauth_sessions_set(LAUTH_SESSION_LOGGED,        true);
+        lauth_sessions_set(LAUTH_SESSION_LOGGED_USERNAME,   $username);
+        lauth_sessions_set(LAUTH_SESSION_LOGGED_ID,         $id);
         delay_redirect(LAUTH_SERVER_URL, 3);
         return ["Đăng nhập thành công. Bấm vào <a href='index.php'>đây</a> nếu trình duyệt không tự động chuyển", LAUTH_ALERT_FINE];
     }
 }
 
-function lauth_seo_loader () {
-
+/**
+ * Hiển thị danh sách các danh mục đã đăng ký trong cài đặt của quản trị
+ *
+ * @param $category_task
+ * @return string
+ * @since 1.0
+ */
+function lauth_settings_category_as_list_load ($category_task) {
+    foreach ($category_task as $key=>$value) {
+        $id     = $value[0];
+        $s_name = $value[1];
+        $active = "";
+        if (get_category() == $id) $active = "active";
+        echo "<li class='list-group-item $active'><a href='?/category={$id}'>{$s_name}</a></li>";
+    }
+    return "<li>Không tìm thấy gì ở đây</li>";
 }

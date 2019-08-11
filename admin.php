@@ -21,7 +21,7 @@ if (lauth_sessions_get("_admin_logged")) redirect("admin-page.php");
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Quản trị | <?php echo LAUTH_SERVER_NAME; ?></title>
+    <title>Quản trị | <?=LAUTH_SERVER_NAME; ?></title>
     <?php
     # JS Load
     js_load("jquery-3.4.1.js");

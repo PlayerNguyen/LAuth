@@ -1,6 +1,6 @@
 <?php
 /**
- * login.php
+ * signin.php
  * Created by Billyz (Player_Nguyen) at 9:49 CH 07/08/2019
  * Code in Lauth Project
  */
@@ -36,29 +36,30 @@ require_once "includes.php";
 
     <?php lauth_navbar_load(); ?>
 
-    <?php if (lauth_is_logged()) {
-        display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);
-        return;
-    } ?>
+    <?php if (lauth_is_logged()) { display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);  delay_redirect(LAUTH_SERVER_URL, 1); return; } ?>
+    <!-- Login bar -->
     <div class="container p-3 mt-m-5" id="login-div">
-
-        <?php if (isset($_POST['login']))  {
-            $login = lauth_login($_POST);
-            display_alert($login[0], $login[1]);
-        } ?>
+        <?php if (isset($_POST['login']))  { $login = lauth_login($_POST); display_alert($login[0], $login[1]); } ?>
 
         <h1 class="title-large">Đăng nhập</h1>
         <form action="" method="post" class="form">
             <div class="form-group">
                 <label for="username">Tên tài khoản</label>
-                <input class="form-control" type="text" name="username" placeholder="Tên tài khoản Minecraft"
-                       title="Tên tài khoản Minecraft">
+                <input
+                        class="form-control"
+                        type="text" name="username"
+                        placeholder="Tên tài khoản Minecraft"
+                        title="Tên tài khoản Minecraft"
+                >
             </div>
             <div class="form-group">
                 <label for="password">Mật khẩu</label>
                 <input class="form-control" type="password" name="password" placeholder="Mật khẩu" title="Mật khẩu">
             </div>
             <?php if (lauth_recaptcha_is_enabled()) { lauth_recaptcha_form_load('login'); } ?>
+            <div class="form-group">
+                <a class="underline" href="forgot.php">Có ai đó quên mật khẩu ở đây nhỉ?</a>
+            </div>
             <div class="form-group rtl">
                 <button type="submit" class="btn btn-primary" name="login">Đăng nhập</button>
             </div>

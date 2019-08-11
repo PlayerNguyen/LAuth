@@ -166,17 +166,18 @@ function lauth_settings_update ($link, $key, $value, $category) {
  * @param int $category string|int
  * @param $string_name string
  * @param $small_text string
+ * @param string $type
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text)
+function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text, $type = 'text')
 {
     $_t             = LAUTH_TABLE_SETTINGS;
     $key            = addslashes($key);
     $value          = addslashes($value);
     $string_name    = addslashes(htmlentities($string_name));
     $small_text     = addslashes(htmlentities($small_text));
-    if (lauth_mysql_select($link, "`key`", $_t, "`key`='$key'")->num_rows <= 0) return lauth_mysql_query($link, /** @lang text */ "INSERT INTO $_t (`key`, `value`, `category`, `string_name`, `small_text`) VALUES ('{$key}', '{$value}', '{$category}', '{$string_name}', '{$small_text}');");
+    if (lauth_mysql_select($link, "`key`", $_t, "`key`='$key'")->num_rows <= 0) return lauth_mysql_query($link, /** @lang text */ "INSERT INTO $_t (`key`, `value`, `category`, `string_name`, `small_text`, `type`) VALUES ('{$key}', '{$value}', '{$category}', '{$string_name}', '{$small_text}', '{$type}');");
     else return null;
 }
 
@@ -187,19 +188,47 @@ function lauth_settings_set_default($link, $key, $value, $category, $string_name
  */
 function lauth_settings_init($link)
 {
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        "lauth_index_description",
+        "<p>Chào, tớ là dòng mô tả về máy chủ của bạn. Bạn có thể chỉnh sửa nó trong phần <b>Cài đặt chung</b> trên trang <a href='admin.php'>quản trị</a>. LAuth là một dạng giao diện trang web (ứng dụng web) được hỗ trợ cho những máy chủ Minecraft với mục đích sử dụng miễn phí. Bạn có thể sử dụng Lauth hoàn toàn miễn phí</p><h3>Tính năng</h3><ul><li><b>Hỗ trợ AuthMe</b> (đăng nhập/đăng ký)</li><li><b>Hỗ trợ nạp thẻ</b></li><li><b>Dễ dàng sử dụng</b></li><li><b>...</b></li></ul>",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Dòng giới thiệu",
+        "Dòng chữ hiễn thị ở đầu trang khi vào trang chủ. Có thể dùng HTML",
+        'largetext'
+    );
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        "authme_table",
+        "authme",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Bảng chứa AuthMe",
+        "Bảng dùng để chứa thông tin của plugin AuthMe. Dùng để đăng nhập cho web"
+    );
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        "server-ip",
+        "Địa chỉ IP của máy chủ có thể cài đặt tại trang quản trị",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Địa chỉ máy chủ",
+        "Địa chỉ(IP) của máy chủ dùng để cho mọi người biết đến máy chủ của mình"
+    );
 
-    lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_table", "authme", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Bảng chứa AuthMe", "Bảng dùng để chứa thông tin của plugin AuthMe. Dùng để đăng nhập cho web");
-    lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_hash_algorithm", "sha256", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Thuật băm của AuthMe",  "Thuật toán băm của AuthMe, bạn có thể xem thêm tại <a href='https://github.com/PlayerNguyen/LAuth'>đây</a>");
+    /**
+     * Đổi sang tự động nhận diện mã hóa
+     */
+    //  lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_hash_algorithm", "sha256", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Thuật băm của AuthMe",  "Thuật toán băm của AuthMe, bạn có thể xem thêm tại <a href='https://github.com/PlayerNguyen/LAuth'>đây</a>");
 
     // Tải ở task default settings
     foreach (lauth::$_DEFAULT_SETTINGS->_TASK as $key => $value) {
         $name = $key;
-        $val = $value["value"]; $category = $value["category"]; $string_name = $value["string_name"]; $small_text = $value["small_text"];
-        lauth_settings_set_default($link, $name, strval($val), strval($category), strval($string_name), strval($small_text));
+        $val = $value["value"]; $category = $value["category"]; $string_name = $value["string_name"]; $small_text = $value["small_text"];$type = $value["type"];
+        lauth_settings_set_default($link, $name, strval($val), strval($category), strval($string_name), strval($small_text), strval($type));
     }
 }
 
 /**
+ *
  * @param $link lauth_mysql
  * @param $key
  * @param string $what
@@ -208,7 +237,6 @@ function lauth_settings_init($link)
  */
 function lauth_settings_get($link, $key, $what = 'value')
 {
-
     $_t = LAUTH_TABLE_SETTINGS;
     $selector = lauth_mysql_select($link, "`{$what}`", $_t, "`key`='{$key}'");
 
@@ -250,12 +278,13 @@ function lauth_settings_get_key_by_category($link, $category = LAUTH_SETTINGS_CA
  * @param $category
  * @param $string_name
  * @param $small_text
+ * @param string $type
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_default_register($task, $key, $value, $category, $string_name, $small_text)
+function lauth_settings_default_register($task, $key, $value, $category, $string_name, $small_text, $type = 'text')
 {
-    return $task->add($key, ["value" => $value, "category" => $category, "string_name"=>$string_name, "small_text"=>$small_text]);
+    return $task->add($key, ["value" => $value, "category" => $category, "string_name"=>$string_name, "small_text"=>$small_text, "type"=>$type]);
 }
 
 /**
