@@ -13,9 +13,11 @@ define("LAUTH_SETTINGS_TYPE_PASSWORD",      "password");
 define("LAUTH_SETTINGS_TYPE_CHECKBOX",      "checkbox");
 define("LAUTH_SETTINGS_TYPE_LARGE_TEXT",    "largetext");
 
-define("LAUTH_SESSION_LOGGED",          "lauth_logged");
-define("LAUTH_SESSION_LOGGED_USERNAME", "lauth_logged_username");
-define("LAUTH_SESSION_LOGGED_ID",       "lauth_logged_id");
+define("LAUTH_SESSION_LOGGED",              "lauth_logged");
+define("LAUTH_SESSION_LOGGED_USERNAME",     "lauth_logged_username");
+define("LAUTH_SESSION_LOGGED_ID",           "lauth_logged_id");
+
+define("LAUTH_SESSION_ADMIN_LOGGED",        "true");
 
 /**
  * Request url
@@ -360,7 +362,6 @@ function lauth_navbar_load()
     $html .= "</nav>";
 
     echo $html;
-
 }
 
 /**
@@ -586,6 +587,12 @@ function redirect($destination)
 }
 
 /**
+ * Sử dụng với func delay_redirect()
+ */
+define("LAUTH_DELAYING_SHORT",  3);
+define("LAUTH_DELAYING_NORMAL", 5);
+define("LAUTH_DELAYING_LONG",   7);
+/**
  * Chuyển hướng đến một trang khác sau khi delay
  * @param $destination string địa điểm muốn đến
  * @param $delay int thời gian
@@ -732,21 +739,21 @@ function salty_verify($password, $hash)
  *
  * <i>LAuth sử dụng giao thức POST cho các form đăng nhập, đăng ký, quên mật khẩu...(bảo mật cao)</i>
  *
- * @param $post_variables
+ * @param array $input
  * @return array|void
  * @since 1.0
  */
-function lauth_login ($post_variables) {
-    if (isset($post_variables['login'])) {
+function lauth_login ($input) {
+    if (isset($input['login'])) {
         if (lauth_recaptcha_is_enabled()) {
-            $verify = lauth_recaptcha_verify_data($post_variables['token']);
+            $verify = lauth_recaptcha_verify_data($input['token']);
             if (is_array($verify)) { return [sprintf("Đã có lỗi khi xác thực recaptcha, những lỗi bao gồm %s", join(", ", $verify)), LAUTH_ALERT_ERROR]; }
         }
-        if (empty($post_variables['password']) || empty($post_variables['username'])) {
+        if (empty($input['password']) || empty($input['username'])) {
             return ["Thông tin bạn nhập bị thiếu, hãy thử nhập lại đầy đủ thông tin", LAUTH_ALERT_ERROR];
         }
-        $username = addslashes($post_variables['username']);
-        $password = addslashes($post_variables['password']);
+        $username = addslashes($input['username']);
+        $password = addslashes($input['password']);
         if (!lauth_authme_is_username_registered(lauth::$_MYSQL, $username)) {
             return ["Tài khoản này không có trong cơ sở dữ liệu", LAUTH_ALERT_ERROR];
         }
@@ -780,4 +787,49 @@ function lauth_settings_category_as_list_load ($category_task) {
         echo "<li class='list-group-item $active'><a href='?/category={$id}'>{$s_name}</a></li>";
     }
     return "<li>Không tìm thấy gì ở đây</li>";
+}
+
+/**
+ * Gọi những loader cần thiết
+ *
+ * @param string $propertyCaller
+ * @param array $args
+ * @since 1.0
+ */
+function call_loader($propertyCaller = '', $args = []) {
+    switch ($propertyCaller) {
+        case  'navbar': {
+
+            break;
+        }
+    }
+}
+
+/**
+ * Gọi đăng nhập trang quản trị
+ *
+ * @param $password
+ * @return array
+ */
+function lauth_admin_login ($password) {
+    if (lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME) != LAUTH_ADMIN_USERNAME) {
+        delay_redirect("index.php", 5);
+        return ['Tài khoản của bạn không phải là tài khoản quản trị.', LAUTH_ALERT_ERROR];
+    }
+    if (empty($password)) {
+        return ["Không đủ dữ kiện để đăng nhập, hãy nhập đủ", LAUTH_ALERT_ERROR];
+    }
+    if (!salty_verify($password, LAUTH_ADMIN_PASSWORD)) {
+        return ["Mật khẩu quản trị không đúng, hãy thử lại", LAUTH_ALERT_ERROR];
+    }
+    lauth_sessions_set(LAUTH_SESSION_ADMIN_LOGGED, true);
+    return ["Đăng nhập thành công, bấm vào <a href='admin-page.php'>đây</a> nếu trình duyệt của bạn không tự chuyển.", LAUTH_ALERT_FINE];
+}
+
+/**
+ * Google Analytics Services
+ * @since
+ */
+function google_analytics_init() {
+    // TODO thêm google analytics api
 }

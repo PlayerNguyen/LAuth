@@ -36,31 +36,31 @@ if (!is_setup()) header("Location: setup.php");
 </head>
 <body>
 
-<?php lauth_navbar_load(); ?>
+    <?php lauth_navbar_load(); ?>
 
-<div class="padding-content">
-    <h1 class="title-huge wrapword animated slideInUp text-center c-white"><?= LAUTH_SERVER_NAME ?> đây</h1>
-    <div class="container p-2 w-75" style="background: transparent;text-align: center">
-        <div class="display-flex">
-            <input
-                    type="text"
-                    class="form-control bg-transparent b-radius-0 c-white"
-                    title=""
-                    readonly
-                    aria-readonly="true"
-                    value="<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>"
-            >
+    <div class="padding-content">
+        <h1 class="title-huge wrapword animated slideInUp text-center c-white"><?= LAUTH_SERVER_NAME ?> đây</h1>
+        <div class="container p-2 w-75" style="background: transparent;text-align: center">
+            <div class="display-flex">
+                <input
+                        type="text"
+                        class="form-control bg-transparent b-radius-0 c-white animated fadeInUp"
+                        title="Địa chỉ máy chủ"
+                        readonly
+                        aria-readonly="true"
+                        value="<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>"
+                >
 
-            <button type="button" class="btn btn-transparent" aria-label="Sao chép">📋</button>
-        </div>
-        <div class="c-white animated slideInUp" style="text-align: left">
-            <?= html_entity_decode(lauth_settings_get(lauth::$_MYSQL, "lauth_index_description")); ?>
-        </div>
-        <div class="">
-            <a class="btn btn-transparent">Tài khoản</a>
+                <button type="button" class="btn btn-transparent animated fadeInUp" aria-label="Sao chép" onclick="copy('<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>');">📋</button>
+            </div>
+            <div class="c-white animated slideInUp" style="text-align: left">
+                <?= html_entity_decode(lauth_settings_get(lauth::$_MYSQL, "lauth_index_description")); ?>
+            </div>
+            <div class="">
+                <a class="btn btn-transparent">Tài khoản</a>
+            </div>
         </div>
     </div>
-</div>
 
 </body>
 </html>

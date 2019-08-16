@@ -7,7 +7,7 @@
 
 require_once "includes.php";
 
-if (!lauth_sessions_isset("_admin_logged") || lauth_sessions_get("_admin_logged") != 1) {
+if (!lauth_sessions_isset(LAUTH_SESSION_ADMIN_LOGGED) || lauth_sessions_get(LAUTH_SESSION_ADMIN_LOGGED) != true) {
     redirect("index.php");
 }
 /**

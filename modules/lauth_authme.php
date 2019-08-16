@@ -326,7 +326,7 @@ function authme_verify_password($password, $hash)
 function lauth_authme_init()
 {
     if (!lauth_is_logged()) {
-        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "signin.php", "Đăng ký" => "register.php"]);
+        lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "signin.php", "Đăng ký" => "signup.php"]);
     } else {
         lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME), ["Thông tin cá nhân" => "profile.php", "Đăng xuất" => "signout.php"]);
     }

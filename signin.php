@@ -36,11 +36,10 @@ require_once "includes.php";
 
     <?php lauth_navbar_load(); ?>
 
-    <?php if (lauth_is_logged()) { display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);  delay_redirect(LAUTH_SERVER_URL, 1); return; } ?>
     <!-- Login bar -->
-    <div class="container p-3 mt-m-5" id="login-div">
+    <div class="container p-3 mt-m-5" id="signin-bix">
+        <?php if (lauth_is_logged()) { display_alert("Bạn đã đăng nhập", LAUTH_ALERT_ERROR);  delay_redirect(LAUTH_SERVER_URL, 1); return; } ?>
         <?php if (isset($_POST['login']))  { $login = lauth_login($_POST); display_alert($login[0], $login[1]); } ?>
-
         <h1 class="title-large">Đăng nhập</h1>
         <form action="" method="post" class="form">
             <div class="form-group">

@@ -199,3 +199,28 @@ function checkbox_init() {
         else _target.value = "0"
     });
 }
+
+/**
+ * Copying the string
+ * @param string
+ */
+function copy(string) {
+    let _temp = $('<input contenteditable="true" readonly="false"/>');
+    $("body").append(_temp);
+
+    _temp.val(string).select();
+
+    let _execute = document.execCommand("copy");
+    if (_execute) {
+        console.log("Copied " + string);
+        alert("Đã sao chép " + string);
+    }
+    else {
+        alert("Đã có lỗi khi sao chép " + string);
+        console.error("Cannot copy " + string);
+    }
+
+    _temp.remove();
+
+
+}
