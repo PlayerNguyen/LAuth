@@ -42,7 +42,7 @@ if (lauth_sessions_get(LAUTH_SESSION_ADMIN_LOGGED)) redirect("admin-page.php");
 
     <div class="container mt-m-3 p-3" id="admin-login">
         <?php if (isset($_POST['login'])) {
-            $display = lauth_admin_login($_POST['password']);
+            $display = lauth_admin_signin($_POST['password']);
             display_alert($display[0], $display[1]);
         } ?>
         <h1 class="title-large">Trang quản trị</h1>

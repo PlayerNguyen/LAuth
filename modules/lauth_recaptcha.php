@@ -7,21 +7,23 @@
 
 lauth_modules_register(lauth::$_MODULES, "lauth_recaptcha", basename(__FILE__));
 
-define("RECAPTCHA_SCRIPTS_SRC", "https://www.google.com/recaptcha/api.js?render=");
-define("RECAPTCHA_VERIFY_URL", "https://www.google.com/recaptcha/api/siteverify");
-define("LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID", 1);
-
 /**
  * Chỉ hoạt động khi đã thiết lập
  */
-if (is_setup() && lauth_modules_is_registered(lauth::$_MODULES, "lauth_mysql")) {
+if (is_setup()) {
+
+
+    define("RECAPTCHA_SCRIPTS_SRC", "https://www.google.com/recaptcha/api.js?render=");
+    define("RECAPTCHA_VERIFY_URL", "https://www.google.com/recaptcha/api/siteverify");
+
+    define("LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID", lauth_settings_category_size(lauth::$_SETTINGS_CATEGORY));
 
     function recaptcha_load()
     {
         // Register settings category
         lauth_settings_category_register(lauth::$_SETTINGS_CATEGORY, "recaptcha", "ReCaptcha", LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID);
         // Register settings default
-        lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "recaptcha_enable", 0, LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID, "Bật tính năng reCaptcha", "LAuth sử dụng reCaptcha v3.0 của Google", LAUTH_SETTINGS_TYPE_TEXT);
+        lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "recaptcha_enable", 0, LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID, "Bật tính năng reCaptcha", "LAuth sử dụng <a href='https://www.google.com/recaptcha/intro/v3.html'>reCaptcha</a> v3.0 của Google", LAUTH_SETTINGS_TYPE_TEXT);
         lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "recaptcha_site_key", "", LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID, "Site key của reCaptcha", "Mã trang của reCaptcha.", LAUTH_SETTINGS_TYPE_TEXT);
         lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "recaptcha_secret_key", "", LAUTH_SETTINGS_CATEGORY_RECAPTCHA_ID, "Secret key của reCaptcha",  "Mã bí mật của reCaptcha.", LAUTH_SETTINGS_TYPE_PASSWORD);
 

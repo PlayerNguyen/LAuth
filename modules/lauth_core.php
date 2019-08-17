@@ -8,16 +8,31 @@
  * nên sẽ không cần register =)))
  */
 
+/**
+ * Khai báo hằng tên các loại cài đặt mặc định
+ *
+ */
 define("LAUTH_SETTINGS_TYPE_TEXT",          "text");
 define("LAUTH_SETTINGS_TYPE_PASSWORD",      "password");
 define("LAUTH_SETTINGS_TYPE_CHECKBOX",      "checkbox");
 define("LAUTH_SETTINGS_TYPE_LARGE_TEXT",    "largetext");
+define("LAUTH_SETTINGS_TYPE_LIST",          "list");
 
+/**
+ * Khai báo hằng tên sessions
+ */
 define("LAUTH_SESSION_LOGGED",              "lauth_logged");
 define("LAUTH_SESSION_LOGGED_USERNAME",     "lauth_logged_username");
 define("LAUTH_SESSION_LOGGED_ID",           "lauth_logged_id");
+define("LAUTH_SESSION_ADMIN_LOGGED",        "lauth_admin_logged");
 
-define("LAUTH_SESSION_ADMIN_LOGGED",        "true");
+/**
+ * Khai báo hằng lỗi
+ * Các hằng này dùng với lauth_error()
+ */
+define("LAUTH_ERRO_ERROR",          256);
+define("LAUTH_ERRO_WARN",           512);
+define("LAUTH_ERRO_NOTICE",         1024);
 
 /**
  * Request url
@@ -30,16 +45,19 @@ function request_url()
 }
 
 /**
- * Trả về tất cả file module
+ * Trả về tất cả tệp modules
+ *
+ * @return array
  * @since 1.0
  */
-function lauth_modules()
+function lauth_file_modules()
 {
     $sd = scandir(LAUTH_FOLDER_MODULES);
     $array = [];
     foreach ($sd as $value) {
-        if ($value == ".." || $value == "." || $value == LAUTH_MODULES_CORE) {
-            continue;
+        if ($value == ".." || $value == ".") { continue; }
+        foreach (LAUTH_DEFAULT_MODULES as $modules) {
+            if ($value === $modules) { continue 2; }
         }
         array_push($array, $value);
     }
@@ -68,45 +86,34 @@ function lauth_modules_init()
  */
 function lauth_modules_register($modules, $name, $file)
 {
-    if (!file_exists(LAUTH_FOLDER_MODULES . $file)) new  lauth_error("Không tìm thấy tệp modules {$file} khi đăng ký modules {$name}", LAUTH_ERRO_ERROR);
+    if (!file_exists(LAUTH_FOLDER_MODULES . $file))
+        new lauth_error("Không tìm thấy tệp modules {$file} khi đăng ký module {$name}", LAUTH_ERRO_ERROR);
     return $modules->add($name, $file);
 }
 
 /**
- * Import tất cả module
+ * Nhập tất cả module
+ *
  * @param $modules lauth_modules
  * @since 1.0
  */
-function lauth_modules_import($modules)
-{
-    foreach (lauth_modules() as $file) {
+function lauth_modules_import($modules) {
+    foreach (lauth_file_modules() as $file) {
         require_once $file;
-
         if (is_null($modules->search($file, $modules::SEARCH_VALUE))) {
             new lauth_error("Module {$file} chưa được đăng ký ", LAUTH_ERRO_NOTICE);
         }
     }
-
 }
 
 /**
  * Những modules đã đăng ký
+ *
  * @param $modules lauth_modules
  * @return array
  * @since 1.0
  */
-function lauth_modules_registered($modules)
-{
-    return $modules->_TASK;
-}
-
-/** Error system */
-/**
- * Defining property
- */
-define("LAUTH_ERRO_NOTICE", 1024);
-define("LAUTH_ERRO_WARN", 512);
-define("LAUTH_ERRO_ERROR", 256);
+function lauth_modules_registered($modules) { return $modules->_TASK; }
 
 /**
  * Class lauth_error
@@ -142,7 +149,7 @@ class lauth_error
 }
 
 /**
- * Task dùng để load mọi phương tiện
+ * Task dùng để tải các ngăn xếp trong
  * @since 1.0
  */
 abstract class lauth_task
@@ -162,16 +169,15 @@ abstract class lauth_task
     public $_TASK = [];
 
     /**
+     * Thêm task vào ngăn xếp
      *
      * @param $name string Tên của task đó
      * @param $object mixed object bạn muốn đưa vào
-     * @param bool $sort
      * @return mixed giá trị của biến object
      * @since 1.0
      */
-    public function add($name, $object, $sort = false) {
+    public function add($name, $object) {
         $adding = $this->_TASK[$name] = $object;
-        if ($sort) ksort($this->_TASK);
         return $adding;
     }
 
@@ -206,22 +212,35 @@ abstract class lauth_task
     }
 }
 
+abstract class lauth_sortable_task extends lauth_task {
+    /**
+     * Sắp xếp sau khi thêm task vào ngăn xếp
+     *
+     * @param string $name
+     * @param mixed $object
+     * @return mixed
+     * @since 1.0
+     */
+    public function add ($name, $object) {
+        $adding = parent::add($name, $object);
+        ksort($this->_TASK);
+        return $adding;
+    }
+}
 /**
  * Class lauth_modules
  * Dùng để load module
  * @since 1.0
  */
-class lauth_modules extends lauth_task
-{
-}
+class lauth_modules extends lauth_task { }
 
 /**
+ * Thanh điều hướng
+ *
  * Class lauth_navbar
  * @since 1.0
  */
-class lauth_navbar extends lauth_task
-{
-}
+class lauth_navbar extends lauth_task { }
 
 /**
  * Class lauth
@@ -230,27 +249,37 @@ class lauth_navbar extends lauth_task
 class lauth
 {
     /**
+     * Dùng để tải những module
      * @var lauth_modules
      */
     public static $_MODULES;
     /**
+     * Dùng để tải thanh điều hướng
      * @var lauth_navbar
      */
     public static $_NAVBAR;
     /**
+     * Dùng để tải MySQL
      * @var lauth_mysql
      */
     public static $_MYSQL;
     /**
-     * Những cài đặt mặc định
-     * @var
+     * Dùng để tải những cài đặt mặc định
+     * @var lauth_default_settings
      */
     public static $_DEFAULT_SETTINGS;
+    /**
+     * Dùng để tải những mục cài đặt trong
+     * trang quản trị
+     *
+     * @var lauth_settings_category
+     */
     public static $_SETTINGS_CATEGORY;
 }
 
 /**
- * Xem rằng đã có setup chưa
+ * Xem rằng user đã có thết lập hay chưa
+ *
  * @return bool
  * @since 1.0
  */
@@ -261,14 +290,12 @@ function is_setup()
 
 /**
  * Kiểm tra xem phiên bản PHP hiện tại có phù hợp hay không
+ *
  * @param $required_version string phiên bản yêu cầu (define LAUTH_PHP_VERSION_REQUEST)
  * @return bool
  * @since 1.0
  */
-function is_valid_php_version($required_version = LAUTH_PHP_VERSION_REQUEST)
-{
-    return $required_version < phpversion();
-}
+function is_valid_php_version($required_version = LAUTH_PHP_VERSION_REQUEST) { return $required_version < phpversion(); }
 
 /**
  * Tạo tệp tin
@@ -279,7 +306,6 @@ function is_valid_php_version($required_version = LAUTH_PHP_VERSION_REQUEST)
  */
 function lauth_files_create($name, $data)
 {
-
     if (file_exists($name)) new lauth_error("Tệp đã có {$name} khi gọi func lauth_files_create", LAUTH_ERRO_ERROR);
     $open = fopen($name, "w");
     if (!$open) new lauth_error("Không thể tạo tệp {$name} khi gọi func lauth_files_create", LAUTH_ERRO_ERROR);
@@ -290,7 +316,7 @@ function lauth_files_create($name, $data)
 }
 
 /**
- * Khởi tạo navbar
+ * Khởi tạo thanh điều hướng
  * @since 1.0
  */
 function lauth_navbar_init()
@@ -314,7 +340,8 @@ function lauth_navbar_register($modules, $name, $navbar)
 }
 
 /**
- * Lấy những task đã register trong navbar
+ * Lấy những task đã đăng ký trong thanh điều hướng
+ *
  * @param $modules lauth_navbar
  * @return array
  * @since 1.0
@@ -325,14 +352,18 @@ function lauth_navbar_registered($modules)
 }
 
 /**
- * Tải navbar thành html. Dùng ở phía dưới của tag body
+ * Tải thanh trạng thái ở dạng html.
+ * Dùng ở phía dưới của tag body
+ *
+ * @param bool $for_admin
  * @since 1.0
  */
-function lauth_navbar_load()
+function lauth_navbar_load($for_admin = false)
 {
     $_SERVERNAME = LAUTH_SERVER_NAME;
     $_HOMEPAGE = LAUTH_SERVER_URL;
 
+    /** Kiểm tra cài đặt trước khi tải thanh điều hướng */
     lauth_error_check();
 
     $html = "<!-- Navbar -->";
@@ -361,55 +392,23 @@ function lauth_navbar_load()
     $html .= "</div>";
     $html .= "</nav>";
 
+    if ($for_admin) {
+        // TODO for admin?
+        $html .= "<!-- Admin navbar -->";
+    }
+
     echo $html;
 }
 
 /**
- * Dùng để tải navbar của admin
- * TODO: thay đổi nó
+ * Dùng để kiểm tra lỗi cài đặt
+ * Nó hiển thị ở phía trên thanh điều hướng
+ *
  * @since 1.0
  */
-function lauth_navbar_admin_load()
-{
-    $_SERVERNAME = LAUTH_SERVER_NAME;
-    $_HOMEPAGE = LAUTH_SERVER_URL;
-
-    lauth_error_check();
-
-    $html = "<!-- Administrative navbar -->";
-    $html .= "<nav class='navbar bg-white collapsible' id='admin-navbar' role='navigation'><div class='navbar-show'><div class='navbar-item'><a href='{$_HOMEPAGE}'><img class='navbar-brand' src='https://minotar.net/avatar/Player_Nguyen/50.png' alt='Brand Icons'><h1 class='title-normal navbar-brand-title'>{$_SERVERNAME}</h1></a></div><button class='navbar-collapse for-mobile'>&#9776;</button></div>";
-    $html .= "<div class='navbar-content'>";
-    foreach (lauth_navbar_registered(lauth::$_NAVBAR) as $key => $navbar_item) {
-        if (is_array($navbar_item)) {
-            $_TITLE = $key;
-            $html .= "<div class='dropdown navbar-item'><a class='dropdown-title'>{$_TITLE}</a><div class='dropdown-content'>";
-            $counter = 0;
-            foreach ($navbar_item as $key1 => $value1) {
-                if (empty($key1) || empty($value1)) {
-                    new lauth_error(sprintf("Mảng phải có hai giá trị tại {$value1} [%s]", $counter),
-                        LAUTH_ERRO_NOTICE
-                    );
-                    continue;
-                }
-                $html .= "<a class='dropdown-item' href='{$value1}'>{$key1}</a>";
-                $counter++;
-            }
-            $html .= "</div></div>";
-        } else {
-            $html .= "<div class='navbar-item'><a href='{$navbar_item}'>{$key}</a></div>";
-        }
-    }
-    $html .= "</div>";
-    $html .= "</nav>";
-
-    echo $html;
-}
-
 function lauth_error_check()  {
-    // Kiểm tra lỗi của cài đặt
-    // MySQL
     # Kiểm tra bảng AuthMe
-    $authme_table = lauth_settings_get(lauth::$_MYSQL, "authme_table");
+    $authme_table = lauth_settings_get(lauth::$_MYSQL, LAUTH_SETTINGS_KEY_AUTHME_TABLE);
     if (!lauth_mysql_table_isset(lauth::$_MYSQL, $authme_table)) {
         display_alert("Không tìm thấy bảng `{$authme_table}` của AuthMe", LAUTH_ALERT_WARN);
     }
@@ -604,21 +603,7 @@ function delay_redirect($destination, $delay = 3)
     header("Refresh: {$delay}; url={$destination}");
 }
 
-class lauth_settings_category extends lauth_task
-{
-
-    /**
-     * @param string $name
-     * @param mixed $object
-     * @param bool $sort
-     * @return mixed
-     * @since 1.0
-     */
-    public function add($name, $object, $sort = true) {
-        return parent::add($name, $object, $sort);
-    }
-
-}
+class lauth_settings_category extends lauth_sortable_task { }
 
 /**
  * Khởi tạo dữ liệu category của cài đặt trang quản trị
@@ -647,6 +632,15 @@ function lauth_settings_category_by_id ($task, $id) {
 }
 
 /**
+ * Trả về kích thước của các danh mục cài đặt hiện có
+ *
+ * @param $task lauth_settings_category
+ * @return int
+ * @since 1.0
+ */
+function lauth_settings_category_size ($task) { return count($task->_TASK); }
+
+/**
  * @param $task lauth_settings_category
  * @param $id
  * @return mixed
@@ -664,9 +658,7 @@ function lauth_settings_category_string_name ($task, $id) {
  * Class lauth_default_settings
  * @since 1.0
  */
-class lauth_default_settings extends lauth_task
-{
-}
+class lauth_default_settings extends lauth_task{ }
 
 /**
  * Khởi tạo task cài đặt mặc định
@@ -682,6 +674,7 @@ function lauth_settings_default_init()
 }
 /**
  * Sinh chuỗi ngẫu nhiên
+ *
  * @param $length
  * @return string
  * @since 1.0
@@ -696,6 +689,14 @@ function rand_string($length)
     return $build;
 }
 
+/**
+ * Mã hóa salty
+ *
+ * @param $password
+ * @param $salt
+ * @return string
+ * @since 1.0
+ */
 function salty_hash($password, $salt)
 {
     return hash("sha256", hash("sha256", hash("sha256", $password) . $salt) . LAUTH_SECURE_CODE);
@@ -719,6 +720,7 @@ function salty($password)
 
 /**
  * Xác nhận xem mật khẩu này có đúng
+ *
  * @param $password
  * @param $hash
  * @return bool
@@ -767,7 +769,7 @@ function lauth_login ($input) {
         lauth_sessions_set(LAUTH_SESSION_LOGGED_USERNAME,   $username);
         lauth_sessions_set(LAUTH_SESSION_LOGGED_ID,         $id);
         delay_redirect(LAUTH_SERVER_URL, 3);
-        return ["Đăng nhập thành công. Bấm vào <a href='index.php'>đây</a> nếu trình duyệt không tự động chuyển", LAUTH_ALERT_FINE];
+        return [sprintf(/** @lang text */"Đăng nhập thành công. Bấm vào <a href='%s'>đây</a> nếu trình duyệt không tự động chuyển", "index.php"), LAUTH_ALERT_FINE];
     }
 }
 
@@ -786,23 +788,7 @@ function lauth_settings_category_as_list_load ($category_task) {
         if (get_category() == $id) $active = "active";
         echo "<li class='list-group-item $active'><a href='?/category={$id}'>{$s_name}</a></li>";
     }
-    return "<li>Không tìm thấy gì ở đây</li>";
-}
-
-/**
- * Gọi những loader cần thiết
- *
- * @param string $propertyCaller
- * @param array $args
- * @since 1.0
- */
-function call_loader($propertyCaller = '', $args = []) {
-    switch ($propertyCaller) {
-        case  'navbar': {
-
-            break;
-        }
-    }
+    return "<li class='list-group-item'>Không tìm thấy gì ở đây</li>";
 }
 
 /**
@@ -811,11 +797,7 @@ function call_loader($propertyCaller = '', $args = []) {
  * @param $password
  * @return array
  */
-function lauth_admin_login ($password) {
-    if (lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME) != LAUTH_ADMIN_USERNAME) {
-        delay_redirect("index.php", 5);
-        return ['Tài khoản của bạn không phải là tài khoản quản trị.', LAUTH_ALERT_ERROR];
-    }
+function lauth_admin_signin($password) {
     if (empty($password)) {
         return ["Không đủ dữ kiện để đăng nhập, hãy nhập đủ", LAUTH_ALERT_ERROR];
     }
@@ -823,8 +805,27 @@ function lauth_admin_login ($password) {
         return ["Mật khẩu quản trị không đúng, hãy thử lại", LAUTH_ALERT_ERROR];
     }
     lauth_sessions_set(LAUTH_SESSION_ADMIN_LOGGED, true);
-    return ["Đăng nhập thành công, bấm vào <a href='admin-page.php'>đây</a> nếu trình duyệt của bạn không tự chuyển.", LAUTH_ALERT_FINE];
+    return [sprintf(/** @lang text */"Đăng nhập thành công. Bấm vào <a href='%s'>đây</a> nếu trình duyệt không tự động chuyển", "admin-page.php"), LAUTH_ALERT_FINE];
 }
+
+/**
+ * Trang quản trị
+ *
+ * @param $category_task
+ * @param $category_id
+ * @since 1.0
+ */
+function lauth_admin_page_init($category_task, $category_id) {
+    $settings_as_category = lauth_settings_category_by_id($category_task, $category_id);
+
+}
+
+/**
+ * Đăng ký tài khoản
+ *
+ * @since 1.0
+ */
+function lauth_signup () { }
 
 /**
  * Google Analytics Services

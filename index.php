@@ -48,13 +48,13 @@ if (!is_setup()) header("Location: setup.php");
                         title="Địa chỉ máy chủ"
                         readonly
                         aria-readonly="true"
-                        value="<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>"
+                        value="<?=lauth_settings_get(lauth::$_MYSQL, LAUTH_SETTINGS_KEY_SERVER_ADDRESS);?>"
                 >
 
-                <button type="button" class="btn btn-transparent animated fadeInUp" aria-label="Sao chép" onclick="copy('<?=lauth_settings_get(lauth::$_MYSQL, "server-ip")?>');">📋</button>
+                <button type="button" class="btn btn-transparent animated fadeInUp" aria-label="Sao chép" onclick="copy('<?=lauth_settings_get(lauth::$_MYSQL, LAUTH_SETTINGS_KEY_SERVER_ADDRESS)?>');">📋</button>
             </div>
             <div class="c-white animated slideInUp" style="text-align: left">
-                <?= html_entity_decode(lauth_settings_get(lauth::$_MYSQL, "lauth_index_description")); ?>
+                <?=html_entity_decode(lauth_settings_get(lauth::$_MYSQL, LAUTH_SETTINGS_KEY_INDEX_DESCRIPTION));?>
             </div>
             <div class="">
                 <a class="btn btn-transparent">Tài khoản</a>

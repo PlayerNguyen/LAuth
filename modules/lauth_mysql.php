@@ -5,49 +5,47 @@
  * Code in Lauth Project
  */
 
-if (is_setup()) lauth_modules_register(lauth::$_MODULES, "lauth_mysql", basename(__FILE__));
-
 if (!extension_loaded("mysqli")) {
     new lauth_error("Phần mở rộng mysqli chưa được cài đặt hoặc bị vô hiệu hóa", LAUTH_ERRO_ERROR);
 }
 
 define("LAUTH_SETTINGS_CATEGORY_DEFAULT_ID", 0);
 
-
 /**
- *
  * Dựa trên hàm mysqli
  *
  * Class lauth_mysql
  * @since 1.0
  */
-class lauth_mysql extends mysqli
-{
-}
+class lauth_mysql extends mysqli { }
 
 /**
- * Initial mysql
+ * Khởi tạo mysql
+ *
  * @return lauth_mysql
  * @since 1.0
  */
-function lauth_mysql_init()
-{
-    $a = new lauth_mysql(LAUTH_MYSQL_HOST, LAUTH_MYSQL_USERNAME, LAUTH_MYSQL_PASSWORD, LAUTH_MYSQL_DATABASE, LAUTH_MYSQL_PORT, null);
-
-    if ($a->connect_errno != 0) {
+function lauth_mysql_init() {
+    /** @var lauth_mysql $connection */
+    $connection = new lauth_mysql(LAUTH_MYSQL_HOST, LAUTH_MYSQL_USERNAME, LAUTH_MYSQL_PASSWORD, LAUTH_MYSQL_DATABASE, LAUTH_MYSQL_PORT, null);
+    /** Nếu gặp lỗi */
+    if ($connection->connect_errno != 0) {
         new lauth_error(sprintf(
             "Lỗi khi kết nối đến MySQL (%s)",
-            $a->connect_error
+            $connection->connect_error
         ), LAUTH_ERRO_ERROR);
     }
-
-    lauth::$_MYSQL = $a;
-    $GLOBALS['_MYSQL'] = $a;
-    return $a;
+    /** Thiết lập charset UTF */
+    mysqli_set_charset($connection, 'UTF8');
+    /** Thiết lập task */
+    lauth::$_MYSQL = $connection;
+    $GLOBALS['_MYSQL'] = $connection;
+    return $connection;
 }
 
 /**
  * Chạy lệnh mysql
+ *
  * @param $link lauth_mysql
  * @param $query
  * @return bool|mysqli_result
@@ -65,6 +63,7 @@ function lauth_mysql_query($link, $query)
 
 /**
  * Kiểm tra xem có tồn tại bảng
+ *
  * @param $link lauth_mysql
  * @param $table_name string tên của table
  * @return bool
@@ -81,6 +80,7 @@ function lauth_mysql_table_isset($link, $table_name)
 
 /**
  * Tạo một bảng mới nếu chưa có
+ *
  * @param $link lauth_mysql
  * @param $table_name
  * @param $values
@@ -99,6 +99,8 @@ function lauth_mysql_table_create($link, $table_name, $values)
 }
 
 /**
+ * Lỗi cuối của MySQL
+ *
  * @param $link lauth_mysql
  * @return mixed
  * @since 1.0
@@ -108,6 +110,14 @@ function lauth_mysql_last_error($link)
     return $link->connect_error;
 }
 
+/**
+ * @param $link
+ * @param $selectWhat
+ * @param $selectTable
+ * @param $where
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
 function lauth_mysql_select($link, $selectWhat, $selectTable, $where)
 {
     if (!lauth_mysql_table_isset($link, $selectTable)) new lauth_error("Không tìm thấy table `{$selectTable}` khi dùng lệnh lauth_mysql_select()", LAUTH_ERRO_ERROR);
@@ -122,22 +132,30 @@ function lauth_mysql_select($link, $selectWhat, $selectTable, $where)
 
 /**
  * Thêm dòng vào bảng
+ *
  * @param $link
- * @param $insertTable string tên tables
- * @param $insertWhat array những cột muốn thêm
+ * @param $insert_table string tên tables
+ * @param $insert_what array những cột muốn thêm
  * @param $values array giá trị của cột muốn thêm
  * @return bool|mysqli_result
  * @since 1.0
  */
-function lauth_mysql_insert($link, $insertTable, $insertWhat, $values = [])
+function lauth_mysql_insert($link, $insert_table, $insert_what, $values = [])
 {
+    if (!lauth_mysql_table_isset($link, $insert_table)) new lauth_error("Không tìm thấy table `{$insert_table}` khi dùng lệnh lauth_mysql_insert()", LAUTH_ERRO_ERROR);
 
-    if (!lauth_mysql_table_isset($link, $insertTable)) new lauth_error("Không tìm thấy table `{$insertTable}` khi dùng lệnh lauth_mysql_insert()", LAUTH_ERRO_ERROR);
+    for ($i = 0; $i < count($insert_what); $i ++ ) {
+        $insert_what[$i] = "`$insert_what[$i]`";
+    }
 
-    $insertion = join(",", $insertWhat);
-    $values = join(",", $values);
+    for ($i = 0; $i < count($values); $i ++ ) {
+        $value = addslashes(htmlspecialchars($values[$i]));
+        $values[$i] = "'$value'";
+    }
 
-    $buildQuery = sprintf(/** @lang text */ "INSERT INTO `%s` (%s) VALUES (%s);", $insertTable, $insertion, $values);
+    $insertTo = join(',', $insert_what); $values = join(",", $values);
+
+    $buildQuery = sprintf(/** @lang text */ "INSERT INTO `%s` (%s) VALUES (%s);", $insert_table, $insertTo, $values);
     $execute = lauth_mysql_query($link, $buildQuery);
     if (!$execute)
         new lauth_error(sprintf("Lỗi khi insert vào MySQL. Lỗi %s", lauth_mysql_last_error($link)), LAUTH_ERRO_ERROR);
@@ -153,13 +171,13 @@ function lauth_mysql_insert($link, $insertTable, $insertWhat, $values = [])
  * @since 1.0
  */
 function lauth_settings_update ($link, $key, $value, $category) {
-    $_t = LAUTH_TABLE_SETTINGS;
     $key =  addslashes($key); $value = addslashes($value); $category = addslashes($category);
-    return lauth_mysql_query($link, /** @lang text */ "UPDATE `{$_t}` SET `key` = '{$key}', `value`='{$value}', `category` = '{$category}' WHERE `key` = '$key'; ");
+    return lauth_mysql_query($link, sprintf(/** @lang text */"UPDATE `%s` SET `value`='%s', `category` = '%s' WHERE `key` = '%s'; ", LAUTH_TABLE_SETTINGS, $value, $category, $key));
 }
 
 /**
  * Thêm phần cài đặt mặc định
+ *
  * @param $link lauth_mysql
  * @param $key string
  * @param $value string
@@ -167,20 +185,30 @@ function lauth_settings_update ($link, $key, $value, $category) {
  * @param $string_name string
  * @param $small_text string
  * @param string $type
+ * @param string $selection
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text, $type = 'text')
+function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text, $type = 'text', $selection = '')
 {
-    $_t             = LAUTH_TABLE_SETTINGS;
     $key            = addslashes($key);
     $value          = addslashes($value);
     $string_name    = addslashes(htmlentities($string_name));
     $small_text     = addslashes(htmlentities($small_text));
-    if (lauth_mysql_select($link, "`key`", $_t, "`key`='$key'")->num_rows <= 0) return lauth_mysql_query($link, /** @lang text */ "INSERT INTO $_t (`key`, `value`, `category`, `string_name`, `small_text`, `type`) VALUES ('{$key}', '{$value}', '{$category}', '{$string_name}', '{$small_text}', '{$type}');");
+    if (lauth_mysql_select($link, "`key`", LAUTH_TABLE_SETTINGS, "`key`='$key'")->num_rows <= 0) {
+        return lauth_mysql_insert($link,
+            LAUTH_TABLE_SETTINGS,
+            ["key", "value", "category", "string_name", "small_text",  "type"],
+            [$key, $value, $category, $string_name, $small_text, $type]
+        );
+    }
     else return null;
 }
 
+define("LAUTH_SETTINGS_KEY_INDEX_DESCRIPTION",  "index-description");
+define("LAUTH_SETTINGS_KEY_AUTHME_TABLE",       "authme-table");
+define("LAUTH_SETTINGS_KEY_AUTHME_HASH",        "authme-hash-algo");
+define("LAUTH_SETTINGS_KEY_SERVER_ADDRESS",     "server-address");
 /**
  * Khởi tạo những phần mặc định của LAuth
  * @param $link lauth_mysql
@@ -190,36 +218,30 @@ function lauth_settings_init($link)
 {
     lauth_settings_default_register(
         lauth::$_DEFAULT_SETTINGS,
-        "lauth_index_description",
-        "<p>Chào, tớ là dòng mô tả về máy chủ của bạn. Bạn có thể chỉnh sửa nó trong phần <b>Cài đặt chung</b> trên trang <a href='admin.php'>quản trị</a>. LAuth là một dạng giao diện trang web (ứng dụng web) được hỗ trợ cho những máy chủ Minecraft với mục đích sử dụng miễn phí. Bạn có thể sử dụng Lauth hoàn toàn miễn phí</p><h3>Tính năng</h3><ul><li><b>Hỗ trợ AuthMe</b> (đăng nhập/đăng ký)</li><li><b>Hỗ trợ nạp thẻ</b></li><li><b>Dễ dàng sử dụng</b></li><li><b>...</b></li></ul>",
+        LAUTH_SETTINGS_KEY_INDEX_DESCRIPTION,
+        "<p>Chào, tớ là dòng mô tả về máy chủ của bạn. Bạn có thể chỉnh sửa nó trong phần <b>Cài đặt chung</b> trên trang <a href=\"admin.php\">quản trị</a>. LAuth là một dạng giao diện trang web (ứng dụng web) được hỗ trợ cho những máy chủ Minecraft với mục đích sử dụng miễn phí. Bạn có thể sử dụng Lauth hoàn toàn miễn phí</p><h3>Tính năng</h3><ul><li><b>Hỗ trợ AuthMe</b> (đăng nhập/đăng ký)</li><li><b>Hỗ trợ nạp thẻ</b></li><li><b>Dễ dàng sử dụng</b></li><li><b>...</b></li></ul>",
         LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
         "Dòng giới thiệu",
         "Dòng chữ hiễn thị ở đầu trang khi vào trang chủ. Có thể dùng HTML",
-        'largetext'
+        LAUTH_SETTINGS_TYPE_LARGE_TEXT
     );
     lauth_settings_default_register(
         lauth::$_DEFAULT_SETTINGS,
-        "authme_table",
-        "authme",
-        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
-        "Bảng chứa AuthMe",
-        "Bảng dùng để chứa thông tin của plugin AuthMe. Dùng để đăng nhập cho web"
-    );
-    lauth_settings_default_register(
-        lauth::$_DEFAULT_SETTINGS,
-        "server-ip",
+        LAUTH_SETTINGS_KEY_SERVER_ADDRESS,
         "Địa chỉ IP của máy chủ có thể cài đặt tại trang quản trị",
         LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
         "Địa chỉ máy chủ",
         "Địa chỉ(IP) của máy chủ dùng để cho mọi người biết đến máy chủ của mình"
     );
+}
 
-    /**
-     * Đổi sang tự động nhận diện mã hóa
-     */
-    //  lauth_settings_default_register(lauth::$_DEFAULT_SETTINGS, "authme_hash_algorithm", "sha256", LAUTH_SETTINGS_CATEGORY_DEFAULT_ID, "Thuật băm của AuthMe",  "Thuật toán băm của AuthMe, bạn có thể xem thêm tại <a href='https://github.com/PlayerNguyen/LAuth'>đây</a>");
-
-    // Tải ở task default settings
+/**
+ * Cập nhật cài đặt mặc định của LAuth
+ *
+ * @param $link
+ * @since 1.0
+ */
+function lauth_settings_default_update($link) {
     foreach (lauth::$_DEFAULT_SETTINGS->_TASK as $key => $value) {
         $name = $key;
         $val = $value["value"]; $category = $value["category"]; $string_name = $value["string_name"]; $small_text = $value["small_text"];$type = $value["type"];
@@ -247,17 +269,17 @@ function lauth_settings_get($link, $key, $what = 'value')
 /**
  * Tìm key setting với category.
  * Trả về null nếu không tìm thấy
- * Trả về array là kết quả của những key trong setting
- * thuộc nhóm đó
+ * Trả về chuỗi là kết quả của những key
+ * trong danh mục thuộc nhóm đó
+ *
  * @param $link
  * @param int $category
  * @return array|null
  * @since 1.0
  */
-function lauth_settings_get_key_by_category($link, $category = LAUTH_SETTINGS_CATEGORY_DEFAULT_ID)
+function lauth_settings_get_keys_by_category($link, $category = LAUTH_SETTINGS_CATEGORY_DEFAULT_ID)
 {
-    $_t = LAUTH_TABLE_SETTINGS;
-    $selector = lauth_mysql_select($link, "`key`", $_t, "`category` = '{$category}' ");
+    $selector = lauth_mysql_select($link, "`key`", LAUTH_TABLE_SETTINGS, "`category` = '{$category}' ");
     if ($selector->num_rows <= 0) return null;
     else {
         $array = [];
@@ -283,9 +305,7 @@ function lauth_settings_get_key_by_category($link, $category = LAUTH_SETTINGS_CA
  * @since 1.0
  */
 function lauth_settings_default_register($task, $key, $value, $category, $string_name, $small_text, $type = 'text')
-{
-    return $task->add($key, ["value" => $value, "category" => $category, "string_name"=>$string_name, "small_text"=>$small_text, "type"=>$type]);
-}
+{ return $task->add($key, ["value" => $value, "category" => $category, "string_name"=>$string_name, "small_text"=>$small_text, "type"=>$type]); }
 
 /**
  *
@@ -298,7 +318,4 @@ function lauth_settings_default_register($task, $key, $value, $category, $string
  * @return mixed
  * @since 1.0
  */
-function lauth_settings_category_register($task, $name, $string_name, $id)
-{
-    return $task->add($name, [$id, $string_name]);
-}
+function lauth_settings_category_register($task, $name, $string_name, $id) { return $task->add($name, [$id, $string_name]); }

@@ -44,6 +44,7 @@ require_once "includes.php";
             delay_redirect("index.php", 5);
             return;
         } ?>
+        <?php  ?>
         <h1 class="title-large">Đăng ký</h1>
         <form action="" method="post" class="form">
             <div class="form-group">
@@ -89,6 +90,10 @@ require_once "includes.php";
 
                     placeholder="Nhập lại mật khẩu..."
                 />
+            </div>
+            <?php if (lauth_recaptcha_is_enabled()) lauth_recaptcha_form_load("signup") ; ?>
+            <div class="form-group rtl">
+                <button type="submit" class="btn btn-primary">Đăng ký</button>
             </div>
         </form>
     </div>

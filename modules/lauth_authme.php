@@ -6,7 +6,7 @@
  */
 
 /**
- * Tớ đã bỏ md5, sha1 và một số thuật toán
+ * Bỏ md5, sha1 và một số thuật toán
  * mã hóa không an toàn vì tính bảo mật cho máy chủ
  */
 
@@ -29,8 +29,6 @@ if (!extension_loaded('hash')) {
 if (lauth_modules_is_registered(lauth::$_MODULES, "lauth_mysql")) {
     require_once "modules/lauth_mysql.php";
 }
-
-lauth_authme_init();
 
 /**
  * Class LAuthHash
@@ -325,12 +323,31 @@ function authme_verify_password($password, $hash)
  */
 function lauth_authme_init()
 {
+    /** AuthMe Navbar */
     if (!lauth_is_logged()) {
         lauth_navbar_register(lauth::$_NAVBAR, "Tài khoản", ["Đăng nhập" => "signin.php", "Đăng ký" => "signup.php"]);
     } else {
         lauth_navbar_register(lauth::$_NAVBAR, lauth_sessions_get(LAUTH_SESSION_LOGGED_USERNAME), ["Thông tin cá nhân" => "profile.php", "Đăng xuất" => "signout.php"]);
     }
 
+    /** AuthMe Default Settings */
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        LAUTH_SETTINGS_KEY_AUTHME_TABLE,
+        "authme",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Bảng chứa AuthMe",
+        "Bảng dùng để chứa thông tin của plugin AuthMe. Dùng để đăng nhập cho web"
+    );
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        LAUTH_SETTINGS_KEY_AUTHME_HASH,
+        'sha256',
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Thuật toán băm của AuthMe",
+        "Thuật toán băm của AuthMe, bạn có thể xem các thuật toán tại <a></a>",
+        "list"
+    );
 }
 
 /**
@@ -351,7 +368,7 @@ function lauth_is_logged()
  * @since 1.0
  */
 function lauth_table_is_authme_registered($link) {
-    return lauth_mysql_table_isset($link, lauth_settings_get($link, "authme_table"));
+    return lauth_mysql_table_isset($link, lauth_settings_get($link, LAUTH_SETTINGS_KEY_AUTHME_TABLE));
 }
 
 /**
@@ -362,7 +379,7 @@ function lauth_table_is_authme_registered($link) {
  * @since 1.0
  */
 function lauth_authme_table ($link) {
-    return lauth_settings_get($link, "authme_table");
+    return lauth_settings_get($link, LAUTH_SETTINGS_KEY_AUTHME_TABLE);
 }
 
 /**

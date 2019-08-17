@@ -14,8 +14,7 @@ if (!lauth_sessions_isset(LAUTH_SESSION_ADMIN_LOGGED) || lauth_sessions_get(LAUT
  * @return mixed|null
  * @since 1.0
  */
-function get_category()
-{
+function get_category() {
     if (!isset($_GET['/category'])) return 0;
     else  return $_GET['/category'];
 }
@@ -51,7 +50,7 @@ function get_category()
 </head>
 <body>
 
-    <?php lauth_navbar_admin_load(); ?>
+    <?php lauth_navbar_load(true); ?>
 
     <div class="container-board mt-m-5 p-1">
         <div class="display-flex" role="group">
@@ -60,8 +59,11 @@ function get_category()
             </ul>
             <div class="container w-75 bg-white shadowing p-3">
                 <?php
+
+                lauth_admin_page_init(lauth::$_SETTINGS_CATEGORY, get_category());
+
                 $_result    = lauth_settings_category_by_id(lauth::$_SETTINGS_CATEGORY, get_category());
-                $__result   = lauth_settings_get_key_by_category(lauth::$_MYSQL, get_category());
+                $__result   = lauth_settings_get_keys_by_category(lauth::$_MYSQL, get_category());
                 if (isset($_GET['set'])) {
                     $_settings_key = [];
                     $results = [];
@@ -83,11 +85,11 @@ function get_category()
                 <h3 class="title-normal"><?php echo $_result[1]; ?></h3>
                 <form action="" role="form" class="form">
                     <table class="table p-3 w-100">
-                        <?php foreach ($__result as $__key)  {
-                            $_val               = lauth_settings_get(lauth::$_MYSQL, $__key);
-                            $_string_name       = lauth_settings_get(lauth::$_MYSQL, $__key, 'string_name');
-                            $_small_text        = lauth_settings_get(lauth::$_MYSQL, $__key, 'small_text');
-                            $type               = lauth_settings_get(lauth::$_MYSQL, $__key, 'type');
+                        <?php foreach (lauth_settings_get_keys_by_category(lauth::$_MYSQL, get_category()) as $key)  {
+                            $_val               = html_entity_decode(lauth_settings_get(lauth::$_MYSQL, $key));
+                            $_string_name       = html_entity_decode(lauth_settings_get(lauth::$_MYSQL, $key, 'string_name'));
+                            $_small_text        = html_entity_decode(lauth_settings_get(lauth::$_MYSQL, $key, 'small_text'));
+                            $type               = html_entity_decode(lauth_settings_get(lauth::$_MYSQL, $key, 'type'));
                             ?>
                             <tr class="table-group">
                                 <td style="width: 30%;"><p class="m-0 p-0"><?=$_string_name ?></p><small class="form-small-text"><?php echo html_entity_decode($_small_text) ?></small></td>
@@ -95,13 +97,22 @@ function get_category()
                                     <?php if ($type == LAUTH_SETTINGS_TYPE_TEXT || $type == LAUTH_SETTINGS_TYPE_PASSWORD || $type == LAUTH_SETTINGS_TYPE_CHECKBOX) { ?>
                                         <input
                                                 class="form-control"
-                                                type="<?=$type ?>"
+                                                type="<?=$type?>"
                                                 value="<?=$_val; ?>"
-                                                name="<?=$__key ?>"
-                                                title="<?=$__key ?>"
+                                                name="<?=$key?>"
+                                                title="<?=$_small_text ?>"
                                         />
                                     <?php } else if ($type == LAUTH_SETTINGS_TYPE_LARGE_TEXT) { ?>
-                                        <div style="height: auto;color:#000000;" class="lauth-editor form-control" name="<?=$__key ?>" title="<?=$__key ?>"><?=$_val; ?></div>
+                                        <div style="height: auto;color:#000000;" class="lauth-editor form-control" name="<?=$key?>" title="<?=$_small_text?>"><?=$_val?></div>
+                                    <?php } else if ($type === LAUTH_SETTINGS_TYPE_LIST) { ?>
+                                        <select  class='form-control' name="<?=$key?>" id="" title="<?=$_small_text?>">
+                                            <?php
+                                                $values = explode('|', $_val);
+                                                foreach ($values as $value) {
+                                                    echo "<option value='$value'>$value</option>";
+                                                }
+                                            ?>
+                                        </select>
                                     <?php } ?>
                                 </td>
                             </tr>
