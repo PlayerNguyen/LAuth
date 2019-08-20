@@ -20,14 +20,22 @@ define("AUTHME_BCRYPT", 1);
 define("AUTHME_PBKDF2", 2);
 /** @deprecated  */
 define("AUTHME_ARGON2", 3);
+/**
+ * Độ dài mật khẩu
+ */
+define("AUTHME_PASSWORD_RANGE",             [5, 30]);
+/**
+ * Danh sách mật khẩu đơn giản
+ */
+define("AUTHME_PASSWORD_EASY_PASSWORD",     [
+    "123456",
+    "password",
+    "654321"
+]);
 
 
 if (!extension_loaded('hash')) {
     new  lauth_error("Phần mở rộng hash không hoạt động hoặc bị vô hiệu hóa", LAUTH_ERRO_ERROR);
-}
-
-if (lauth_modules_is_registered(lauth::$_MODULES, "lauth_mysql")) {
-    require_once "modules/lauth_mysql.php";
 }
 
 /**
@@ -241,67 +249,35 @@ class authme_argon2 extends lauth_encrypt
 }
 
 /**
- * Lấy object lauth_encrypt
- * @param int $type
- * @return lauth_encrypt|null
+ * Hàm mã hóa mật khẩu. Hàm này liên kết
+ * với authme để mã hóa mật khẩu cho
+ * tài khoản mỗi người
  *
- * @since 1.0
- * @deprecated
- */
-function authme_objects($type = AUTHME_SHA256)
-{
-    $object = null;
-    switch ($type) {
-        case AUTHME_SHA256:
-        {
-            $object = new authme_sha256();
-            break;
-        }
-        case AUTHME_BCRYPT:
-        {
-            $object = new authme_bcrypt();
-            break;
-        }
-        case AUTHME_PBKDF2:
-        {
-            $object = new authme_pbkdf2();
-            break;
-        }
-        case AUTHME_ARGON2:
-        {
-            $object = new authme_argon2();
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-    return $object;
-}
-
-/**
- * Trả giá trị hash
  * @param $password
- * @param int $type
+ * @param string $algo
  * @return mixed
  * @since 1.0
- * @deprecated
  */
-function authme_hash($password, $type = AUTHME_SHA256)
-{
-    $object = authme_objects($type);
+function lauth_authme_hash($password, $algo = 'sha256') {
+    switch ($algo) {
+        case 'bcrypt': { $object = new authme_bcrypt();break; }
+        case 'pbkdf2': { $object = new authme_pbkdf2();break; }
+        case 'argon2': { $object = new authme_argon2();break; }
+        case 'sha256':
+        default:       { $object = new authme_sha256();break; }
+    }
     return $object->hash($password);
 }
 
 /**
  * Kiểm tra mật khẩu
+ *
  * @param $password
  * @param $hash
  * @return mixed
  * @since 1.0
  */
-function authme_verify_password($password, $hash)
+function lauth_authme_verify_password($password, $hash)
 {
     $object = null;
     $exp = explode('$', $hash);
@@ -345,8 +321,9 @@ function lauth_authme_init()
         'sha256',
         LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
         "Thuật toán băm của AuthMe",
-        "Thuật toán băm của AuthMe, bạn có thể xem các thuật toán tại <a></a>",
-        "list"
+        "Thuật toán băm của AuthMe, dùng để tạo mật khẩu, bạn có thể xem thêm cài đặt này tại <a href='https://github.com/PlayerNguyen/LAuth'>đây</a>",
+        LAUTH_SETTINGS_TYPE_LIST,
+        "sha256|bcrypt|pbkdf2|argon2"
     );
 }
 
@@ -375,7 +352,7 @@ function lauth_table_is_authme_registered($link) {
  * Trả về giá trị là tên bảng của AuthMe
  *
  * @param $link
- * @return mixed
+ * @return string
  * @since 1.0
  */
 function lauth_authme_table ($link) {
@@ -391,7 +368,7 @@ function lauth_authme_table ($link) {
  * @return bool|mysqli_result
  * @since 1.0
  */
-function authme_get_player ($link, $query, $where =  'realname', $what = '*') {
+function lauth_authme_get_player ($link, $query, $where =  'realname', $what = '*') {
     $table =  lauth_authme_table($link);
     $query = addslashes($query);
     return lauth_mysql_select($link, $what, $table, "`{$where}` = '{$query}'");
@@ -399,6 +376,7 @@ function authme_get_player ($link, $query, $where =  'realname', $what = '*') {
 
 /**
  * Kiểm tra xem mật khẩu có đúng với hash trong CSDL hay không
+ *
  * @param $link
  * @param $username
  * @param $password
@@ -406,29 +384,48 @@ function authme_get_player ($link, $query, $where =  'realname', $what = '*') {
  * @since 1.0
  */
 function lauth_password_check ($link, $username, $password) {
-    $data = authme_get_player($link, $username)->fetch_assoc();
+    $data = lauth_authme_get_player($link, $username)->fetch_assoc();
     $hash = $data['password'];
-    return authme_verify_password($password, $hash);
+    return lauth_authme_verify_password($password, $hash);
 }
 
 /**
  * Kiểm tra xem tài khoản trên đã đăng ký chưa
+ *
  * @param $link lauth_mysql
  * @param $username string
  * @return bool
  * @since 1.0
  */
 function lauth_authme_is_username_registered ($link, $username) {
-    return authme_get_player($link, $username, 'realname')->num_rows > 0;
+    return lauth_authme_get_player($link, $username, 'realname')->num_rows > 0;
 }
 
 /**
  * Kiểm tra xem email đã đăng ký hay chưa
+ *
  * @param $link lauth_mysql
  * @param $email string
  * @return bool
  * @since 1.0
  */
 function lauth_authme_is_email_registered ($link, $email) {
-    return authme_get_player($link, $email, 'email')->num_rows > 0;
+    return lauth_authme_get_player($link, $email, 'email')->num_rows > 0;
+}
+
+function lauth_authme_register ($mysql_task, $username, $password, $email) {
+
+    $username   = addslashes(strtolower($username));
+    $realname   = addslashes($username);
+    $email      = addslashes($email);
+    /** Password process */
+    $algo = lauth_settings_get($mysql_task, LAUTH_SETTINGS_KEY_AUTHME_HASH);
+    $hash = lauth_authme_hash($password, $algo);
+
+    $result = lauth_mysql_insert($mysql_task,
+        lauth_authme_table($mysql_task),
+        ["username", "realname", "password", "ip", "regdate", "email"],
+        [$username, $realname, $hash, get_client_ip_env(), millisecond(time()), $email]
+    );
+    return $result;
 }

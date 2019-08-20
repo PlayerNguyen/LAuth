@@ -59,29 +59,13 @@ function get_category() {
             </ul>
             <div class="container w-75 bg-white shadowing p-3">
                 <?php
-
-                lauth_admin_page_init(lauth::$_SETTINGS_CATEGORY, get_category());
-
-                $_result    = lauth_settings_category_by_id(lauth::$_SETTINGS_CATEGORY, get_category());
-                $__result   = lauth_settings_get_keys_by_category(lauth::$_MYSQL, get_category());
-                if (isset($_GET['set'])) {
-                    $_settings_key = [];
-                    $results = [];
-
-                    $done = false;
-                    foreach ($_GET as $key=>$value) {
-                        foreach ($__result as $comparator) {
-                            if ($comparator == $key) $_settings_key[$key] = $value;
-                        }
+                    $_result    = lauth_settings_category_by_id(lauth::$_SETTINGS_CATEGORY, get_category());
+                    if (isset($_GET['set'])) {
+                        $init = lauth_admin_page_init(lauth::$_SETTINGS_CATEGORY, get_category(), lauth::$_MYSQL, $_GET);
+                        display_alert($init[0], $init[1]);
                     }
-                    foreach ($_settings_key as $key=>$value) {
-                        $a = lauth_settings_update(lauth::$_MYSQL, $key, $value, lauth_settings_get(lauth::$_MYSQL, $key, 'category'));
-                        array_push($results, $a);
-                    }
-                    foreach ($results as $result) { if ($results) $done = true; else $done = false; }
-                    if ($done == true) display_alert("Chỉnh sửa thành công", LAUTH_ALERT_FINE);
-                    delay_redirect("?/category={$_GET['/category']}");
-                } ?>
+                ?>
+
                 <h3 class="title-normal"><?php echo $_result[1]; ?></h3>
                 <form action="" role="form" class="form">
                     <table class="table p-3 w-100">
@@ -100,16 +84,21 @@ function get_category() {
                                                 type="<?=$type?>"
                                                 value="<?=$_val; ?>"
                                                 name="<?=$key?>"
-                                                title="<?=$_small_text ?>"
+                                                title="<?=strip_tags($_small_text) ?>"
                                         />
                                     <?php } else if ($type == LAUTH_SETTINGS_TYPE_LARGE_TEXT) { ?>
-                                        <div style="height: auto;color:#000000;" class="lauth-editor form-control" name="<?=$key?>" title="<?=$_small_text?>"><?=$_val?></div>
+                                        <div style="height: auto;color:#000000;" class="lauth-editor form-control" name="<?=$key?>" title="<?=strip_tags($_small_text)?>"><?=$_val?></div>
                                     <?php } else if ($type === LAUTH_SETTINGS_TYPE_LIST) { ?>
-                                        <select  class='form-control' name="<?=$key?>" id="" title="<?=$_small_text?>">
+                                        <select  class='form-control' name="<?=$key?>" id="" title="<?=strip_tags($_small_text);?>">
                                             <?php
-                                                $values = explode('|', $_val);
+                                                $list = html_entity_decode(lauth_settings_get(lauth::$_MYSQL, $key, 'selection'));
+
+                                                $values = explode('|', $list);
                                                 foreach ($values as $value) {
-                                                    echo "<option value='$value'>$value</option>";
+                                                    if ($value === $_val) {
+                                                        echo "<option value='$_val' selected>{$_val}</option>";
+                                                        continue;
+                                                    }echo "<option value='$value'>$value</option>";
                                                 }
                                             ?>
                                         </select>

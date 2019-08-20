@@ -4,13 +4,14 @@
  * Created by Billyz (Player_Nguyen) at 4:23 CH 04/08/2019
  * Code in Lauth Project
  *
- * lauth_core là module hệ thống của lauth, dùng để load những modules khác
- * nên sẽ không cần register =)))
+ * lauth_core là module hệ thống của lAuth,
+ * dùng để load những modules khác cũng như
+ * những tác vụ cơ bản của LAuth
+ *
  */
 
 /**
  * Khai báo hằng tên các loại cài đặt mặc định
- *
  */
 define("LAUTH_SETTINGS_TYPE_TEXT",          "text");
 define("LAUTH_SETTINGS_TYPE_PASSWORD",      "password");
@@ -35,6 +36,12 @@ define("LAUTH_ERRO_WARN",           512);
 define("LAUTH_ERRO_NOTICE",         1024);
 
 /**
+ * Khai bao hằng cài đặt
+ */
+define("LAUTH_MINECRAFT_USERNAME_RANGE",              [3, 16]);
+define("LAUTH_MINECRAFT_USERNAME_PATTERN",            '/[a-zA-Z_]/');
+
+/**
  * Request url
  * @return mixed
  * @since 1.0
@@ -52,12 +59,13 @@ function request_url()
  */
 function lauth_file_modules()
 {
-    $sd = scandir(LAUTH_FOLDER_MODULES);
+    $modules = scandir(LAUTH_FOLDER_MODULES);
     $array = [];
-    foreach ($sd as $value) {
+    foreach ($modules as $value) {
         if ($value == ".." || $value == ".") { continue; }
-        foreach (LAUTH_DEFAULT_MODULES as $modules) {
-            if ($value === $modules) { continue 2; }
+        /** Kiểm tra nếu module đó là module chính */
+        foreach (LAUTH_DEFAULT_MODULES as $module) {
+            if ($value === $module) { continue 2; }
         }
         array_push($array, $value);
     }
@@ -87,7 +95,7 @@ function lauth_modules_init()
 function lauth_modules_register($modules, $name, $file)
 {
     if (!file_exists(LAUTH_FOLDER_MODULES . $file))
-        new lauth_error("Không tìm thấy tệp modules {$file} khi đăng ký module {$name}", LAUTH_ERRO_ERROR);
+        new lauth_error("Không tìm thấy tệp module {$file} khi đăng ký module {$name}", LAUTH_ERRO_ERROR);
     return $modules->add($name, $file);
 }
 
@@ -182,7 +190,7 @@ abstract class lauth_task
     }
 
     /**
-     * Lượm trong _TASK;
+     * Lượm task
      * @param $index int
      * @return mixed
      * @since 1.0
@@ -191,14 +199,13 @@ abstract class lauth_task
 
     /**
      * Tìm kiếm với thời gian O(n) (linear search)
+     *
      * @param $what
      * @param $search_type
      * @return null|mixed
      * @since 1.0
      */
-    public function search($what, $search_type = self::SEARCH_NAME)
-    {
-        # search with the name only
+    public function search($what, $search_type = self::SEARCH_NAME) {
         if ($search_type == self::SEARCH_NAME) {
             foreach ($this->_TASK as $key => $value) {
                 if ($key == $what) return $this->_TASK[$key];
@@ -425,10 +432,10 @@ function lauth_error_check()  {
 
 /**
  * Chạy chế đô debug nếu setting debug bật
+ *
  * @since 1.0
  */
-function lauth_debug_init()
-{
+function lauth_debug_init() {
     if (LAUTH_SETTINGS_DEBUG) error_reporting(LAUTH_ERRO_WARN || LAUTH_ERRO_NOTICE || LAUTH_ERRO_ERROR);
     else error_reporting(0);
 }
@@ -437,8 +444,7 @@ function lauth_debug_init()
  * Chặn chỉ mục khi robot scan vào web, gọi ở đầu trang web (phần <head>)
  * @since 1.0
  */
-function robots_norobot()
-{
+function robots_norobot() {
     echo "<meta name='robots' content='noindex'>";
 }
 
@@ -446,8 +452,7 @@ function robots_norobot()
  * Chặn chỉ mục đối với bot của google, gọi ở đầu trang web (phần <head>)
  * @since 1.0
  */
-function grobots_norobot()
-{
+function grobots_norobot() {
     echo "<meta name='googlebot' content='noindex'>";
 }
 
@@ -549,6 +554,17 @@ function is_valid_url($url)
 }
 
 /**
+ * Kiểm tra xem đây có phải
+ * là email thật hay không
+ *
+ * @param $string
+ * @return bool
+ * @since 1.0
+ */
+function is_valid_email ($string) {
+    return filter_var($string, FILTER_VALIDATE_EMAIL);
+}
+/**
  * @param $where string the url
  * @param array $options
  * @return false|resource
@@ -580,10 +596,7 @@ function lauth_curl($where, $options = [])
  * @param $destination
  * @since 1.0
  */
-function redirect($destination)
-{
-    header("Location: {$destination}");
-}
+function redirect($destination) { header("Location: {$destination}"); }
 
 /**
  * Sử dụng với func delay_redirect()
@@ -593,6 +606,7 @@ define("LAUTH_DELAYING_NORMAL", 5);
 define("LAUTH_DELAYING_LONG",   7);
 /**
  * Chuyển hướng đến một trang khác sau khi delay
+ *
  * @param $destination string địa điểm muốn đến
  * @param $delay int thời gian
  * @since 1.0
@@ -603,6 +617,10 @@ function delay_redirect($destination, $delay = 3)
     header("Refresh: {$delay}; url={$destination}");
 }
 
+/**
+ * Class lauth_settings_category
+ * @since 1.0
+ */
 class lauth_settings_category extends lauth_sortable_task { }
 
 /**
@@ -662,6 +680,7 @@ class lauth_default_settings extends lauth_task{ }
 
 /**
  * Khởi tạo task cài đặt mặc định
+ *
  * @return lauth_default_settings
  * @since 1.0
  */
@@ -796,6 +815,7 @@ function lauth_settings_category_as_list_load ($category_task) {
  *
  * @param $password
  * @return array
+ * @since 1.0
  */
 function lauth_admin_signin($password) {
     if (empty($password)) {
@@ -809,27 +829,482 @@ function lauth_admin_signin($password) {
 }
 
 /**
- * Trang quản trị
+ * Thiết lập trang quản trị
  *
- * @param $category_task
- * @param $category_id
+ * @param $category_task lauth_settings_category
+ * @param $category_id string|integer
+ * @param $mysql_task lauth_mysql
+ * @return array
  * @since 1.0
  */
-function lauth_admin_page_init($category_task, $category_id) {
-    $settings_as_category = lauth_settings_category_by_id($category_task, $category_id);
+function lauth_admin_page_init($category_task, $category_id, $mysql_task, $input) {
+    $keys                 = lauth_settings_get_keys_by_category($mysql_task,    $category_id);
 
+    $_settings_key = [];
+    $results = [];
+
+    $done = false;
+    foreach ($_GET as $key=>$value) {
+        foreach ($keys as $comparator) {
+            if ($comparator == $key) $_settings_key[$key] = $value;
+        }
+    }
+    foreach ($_settings_key as $key=>$value) {
+        $a = lauth_settings_update(lauth::$_MYSQL, $key, $value, lauth_settings_get(lauth::$_MYSQL, $key, 'category'));
+        array_push($results, $a);
+    }
+    foreach ($results as $result) { if ($results) $done = true; else $done = false; }
+    if ($done == true) {
+        delay_redirect("?/category={$input['/category']}", LAUTH_DELAYING_SHORT);
+        return ["Chỉnh sửa thành công", LAUTH_ALERT_FINE];
+    } else {
+        return ["Lỗi khi chỉnh sửa", LAUTH_ALERT_ERROR];
+    }
 }
 
 /**
- * Đăng ký tài khoản
+ * Tạo thời gian bằng mili giây (dùng cho mô-đun AuthMe)
  *
+ * @param $time int
+ * @return float|int
  * @since 1.0
  */
-function lauth_signup () { }
+function millisecond($time) { return intval($time)/1000; }
+
+/**
+ * Lấy địa chỉ hiện tại
+ *
+ * @return array|false|string
+ * @since 1.0
+ */
+function get_client_ip_env() {
+    if (getenv('HTTP_CLIENT_IP'))
+        $addr3ss = getenv('HTTP_CLIENT_IP');
+    else if(getenv('HTTP_X_FORWARDED_FOR'))
+        $addr3ss = getenv('HTTP_X_FORWARDED_FOR');
+    else if(getenv('HTTP_X_FORWARDED'))
+        $addr3ss = getenv('HTTP_X_FORWARDED');
+    else if(getenv('HTTP_FORWARDED_FOR'))
+        $addr3ss = getenv('HTTP_FORWARDED_FOR');
+    else if(getenv('HTTP_FORWARDED'))
+        $addr3ss = getenv('HTTP_FORWARDED');
+    else if(getenv('REMOTE_ADDR'))
+        $addr3ss = getenv('REMOTE_ADDR');
+    else
+        $addr3ss = 'UNKNOWN';
+    return $addr3ss;
+}
+
+/**
+ * Đăng ký tài khoản với form
+ *
+ * @param $input array
+ * @param $mysql_task lauth_mysql
+ * @return array
+ * @since 1.0
+ */
+function lauth_signup ($input, $mysql_task) {
+    if (lauth_recaptcha_is_enabled())  {
+        $token  = $input['token'];
+        $result = lauth_recaptcha_verify_data($token);
+
+        if (is_array($result)) {
+            $errors = join(',', $result);
+            return ["Lỗi ReCaptcha: {$errors}", LAUTH_ALERT_ERROR];
+        }
+    }
+    $username   = $input['username'];
+    $password   = $input['password'];
+    $repassword = $input['repassword'];
+    $email      = $input['email'];
+    if (lauth_authme_is_username_registered($mysql_task, $username)
+        || lauth_authme_is_email_registered($mysql_task, $email)) {
+        return ["Tài khoản {$username} hoặc email {$email} đã có người đăng ký", LAUTH_ALERT_ERROR];
+    }
+    if (empty($username) || empty($password) || empty($repassword) || empty($email)) {
+        return ["Thông tin bạn nhập không đủ", LAUTH_ALERT_ERROR];
+    }
+    if (strlen($username) < LAUTH_MINECRAFT_USERNAME_RANGE[0]
+        || strlen($username) > LAUTH_MINECRAFT_USERNAME_RANGE[1]
+        || !preg_match("/^\w*$/", $username) === 1) {
+        return ["Tên không hợp lệ. Tên chỉ được chứa kí tự từ <b>a-z, A-Z, 0-9</b> và chỉ chứa <b>_</b>(dấu gạch chân) và chỉ được từ <b>3-16</b> ký tự", LAUTH_ALERT_ERROR];
+    }
+    $password_min = AUTHME_PASSWORD_RANGE[0];
+    $password_max = AUTHME_PASSWORD_RANGE[1];
+    if (strlen($password) < $password_min
+        || strlen($password) > $password_max) {
+        return ["Mật khẩu không đủ điều kiện. Mật khẩu phải tối thiểu $password_min ký tự và tối đa là $password_max",  LAUTH_ALERT_ERROR];
+    }
+    foreach (AUTHME_PASSWORD_EASY_PASSWORD as $easy_password) {
+        if ($password == $easy_password)  {
+            return ["Mật khẩu này rất dễ đoán, hãy thử mật khẩu khác", LAUTH_ALERT_ERROR];
+        }
+    }
+    if ($password !== $repassword) {
+        return ["Mật khẩu và mật khẩu xác nhận không khớp", LAUTH_ALERT_ERROR];
+    }
+    if (!is_valid_email($email)) {
+        return ["Email không hợp lệ", LAUTH_ALERT_ERROR];
+    }
+    $register = lauth_authme_register(lauth::$_MYSQL,  $username, $password, $email);
+    if (!$register) {
+        return ["Đã có lỗi khi đăng ký", LAUTH_ALERT_ERROR];
+    }
+    return ["Đã đăng ký thành công", LAUTH_ALERT_FINE];
+}
+
+
+/**
+ * lauth_mysqli.php
+ * Created by Billyz (Player_Nguyen) at 4:44 CH 04/08/2019
+ * Code in Lauth Project
+ */
+
+if (!extension_loaded("mysqli")) {
+    new lauth_error("Phần mở rộng mysqli chưa được cài đặt hoặc bị vô hiệu hóa", LAUTH_ERRO_ERROR);
+}
+
+define("LAUTH_SETTINGS_CATEGORY_DEFAULT_ID", 0);
+
+/**
+ * Dựa trên hàm mysqli
+ *
+ * Class lauth_mysql
+ * @since 1.0
+ */
+class lauth_mysql extends mysqli
+{
+}
+
+/**
+ * Khởi tạo mysql
+ *
+ * @return lauth_mysql
+ * @since 1.0
+ */
+function lauth_mysql_init()
+{
+    /** @var lauth_mysql $connection */
+    $connection = new lauth_mysql(LAUTH_MYSQL_HOST, LAUTH_MYSQL_USERNAME, LAUTH_MYSQL_PASSWORD, LAUTH_MYSQL_DATABASE, LAUTH_MYSQL_PORT, null);
+    /** Nếu gặp lỗi */
+    if ($connection->connect_errno != 0) {
+        new lauth_error(sprintf(
+            "Lỗi khi kết nối đến MySQL (%s)",
+            $connection->connect_error
+        ), LAUTH_ERRO_ERROR);
+    }
+    /** Thiết lập charset UTF */
+    mysqli_set_charset($connection, 'UTF8');
+    /** Thiết lập task */
+    lauth::$_MYSQL = $connection;
+    $GLOBALS['_MYSQL'] = $connection;
+    return $connection;
+}
+
+/**
+ * Chạy lệnh mysql
+ *
+ * @param $link lauth_mysql
+ * @param $query
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
+function lauth_mysql_query($link, $query)
+{
+    $selector = $link->query($query);
+
+    if (!$selector) {
+        new lauth_error(sprintf("Lỗi khi chạy lệnh (%s). Lỗi vì %s", $query, mysqli_error($link)), LAUTH_ERRO_ERROR);
+    }
+    return $selector;
+}
+
+/**
+ * Kiểm tra xem có tồn tại bảng
+ *
+ * @param $link lauth_mysql
+ * @param $table_name string tên của table
+ * @return bool
+ * @since 1.0
+ */
+function lauth_mysql_table_isset($link, $table_name)
+{
+    $tables = lauth_mysql_query($link, "SHOW TABLES;")->fetch_all();
+    for ($i = 0; $i < count($tables); $i++) {
+        if ($tables[$i][0] == $table_name) return true;
+    }
+    return false;
+}
+
+/**
+ * Tạo một bảng mới nếu chưa có
+ *
+ * @param $link lauth_mysql
+ * @param $table_name
+ * @param $values
+ * @return bool|mysqli_result|null
+ * @since 1.0
+ */
+function lauth_mysql_table_create($link, $table_name, $values)
+{
+    if (!lauth_mysql_table_isset($link, $table_name)) {
+        $body = join(",", $values);
+        $query = /** @lang text */
+            "CREATE TABLE `{$table_name}` ($body); ";
+        return lauth_mysql_query($link, $query);
+    }
+    return null;
+}
+
+/**
+ * Lỗi cuối của MySQL
+ *
+ * @param $link lauth_mysql
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_mysql_last_error($link)
+{
+    return $link->connect_error;
+}
+
+/**
+ * @param $link
+ * @param $select_what
+ * @param $select_table
+ * @param $where
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
+function lauth_mysql_select($link, $select_what, $select_table, $where)
+{
+    if (!lauth_mysql_table_isset($link, $select_table)) new lauth_error("Không tìm thấy table `{$select_table}` khi dùng lệnh lauth_mysql_select()", LAUTH_ERRO_ERROR);
+    $query = sprintf(/** @lang text */ "SELECT %s FROM %s WHERE %s", $select_what, $select_table, $where);
+
+    $execute = lauth_mysql_query($link, $query);
+    if (!$execute) {
+        new lauth_error(sprintf("Lỗi khi thực hiện lệnh lauth_mysql_select(). Lỗi %s", lauth_mysql_last_error($link)));
+    }
+    return $execute;
+}
+
+/**
+ * Thêm dòng vào bảng
+ *
+ * @param $link
+ * @param $insert_table string tên tables
+ * @param $insert_what array những cột muốn thêm
+ * @param $values array giá trị của cột muốn thêm
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
+function lauth_mysql_insert($link, $insert_table, $insert_what, $values = [])
+{
+    if (!lauth_mysql_table_isset($link, $insert_table))
+        new lauth_error("Không tìm thấy table `{$insert_table}` khi dùng lệnh lauth_mysql_insert()", LAUTH_ERRO_ERROR);
+
+    for ($i = 0; $i < count($insert_what); $i++) {
+        $insert_what[$i] = "`$insert_what[$i]`";
+    }
+
+    for ($i = 0; $i < count($values); $i++) {
+        $value = addslashes(htmlspecialchars($values[$i]));
+        $values[$i] = "'$value'";
+    }
+
+    $insertTo = join(',', $insert_what);
+    $values = join(",", $values);
+
+    $buildQuery = sprintf(/** @lang text */ "INSERT INTO `%s` (%s) VALUES (%s);", $insert_table, $insertTo, $values);
+    $execute = lauth_mysql_query($link, $buildQuery);
+    if (!$execute)
+        new lauth_error(sprintf("Lỗi khi insert vào MySQL. Lỗi %s", lauth_mysql_last_error($link)), LAUTH_ERRO_ERROR);
+    return $execute;
+}
+
+/**
+ * @param $link lauth_mysql
+ * @param $key
+ * @param $value
+ * @param $category
+ * @return bool|mysqli_result
+ * @since 1.0
+ */
+function lauth_settings_update($link, $key, $value, $category)
+{
+    $key = addslashes($key);
+    $value = addslashes($value);
+    $category = addslashes($category);
+    return lauth_mysql_query($link, sprintf(/** @lang text */ "UPDATE `%s` SET `value`='%s', `category` = '%s' WHERE `key` = '%s'; ", LAUTH_TABLE_SETTINGS, $value, $category, $key));
+}
+
+/**
+ * Thêm phần cài đặt mặc định
+ *
+ * @param $link lauth_mysql
+ * @param $key string
+ * @param $value string
+ * @param int $category string|int
+ * @param $string_name string
+ * @param $small_text string
+ * @param string $type
+ * @param string $list
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_settings_set_default($link, $key, $value, $category, $string_name, $small_text, $type = 'text', $selection = '')
+{
+    $key = addslashes($key);
+    $value = addslashes($value);
+    $string_name = addslashes(htmlentities($string_name));
+    $small_text = addslashes(htmlentities($small_text));
+    if (lauth_mysql_select($link, "`key`", LAUTH_TABLE_SETTINGS, "`key`='$key'")->num_rows <= 0) {
+        return lauth_mysql_insert($link,
+            LAUTH_TABLE_SETTINGS,
+            ["key", "value", "category", "string_name", "small_text", "type", "selection"],
+            [$key, $value, $category, $string_name, $small_text, $type, $selection]
+        );
+    } else return null;
+}
+
+define("LAUTH_SETTINGS_KEY_INDEX_DESCRIPTION", "index-description");
+define("LAUTH_SETTINGS_KEY_AUTHME_TABLE", "authme-table");
+define("LAUTH_SETTINGS_KEY_AUTHME_HASH", "authme-hash-algo");
+define("LAUTH_SETTINGS_KEY_SERVER_ADDRESS", "server-address");
+/**
+ * Khởi tạo những phần mặc định của LAuth
+ * @param $link lauth_mysql
+ * @since 1.0
+ */
+function lauth_settings_init($link)
+{
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        LAUTH_SETTINGS_KEY_INDEX_DESCRIPTION,
+        "<p>Chào, tớ là dòng mô tả về máy chủ của bạn. Bạn có thể chỉnh sửa nó trong phần <b>Cài đặt chung</b> trên trang <a href=\"admin.php\">quản trị</a>. LAuth là một dạng giao diện trang web (ứng dụng web) được hỗ trợ cho những máy chủ Minecraft với mục đích sử dụng miễn phí. Bạn có thể sử dụng Lauth hoàn toàn miễn phí</p><h3>Tính năng</h3><ul><li><b>Hỗ trợ AuthMe</b> (đăng nhập/đăng ký)</li><li><b>Hỗ trợ nạp thẻ</b></li><li><b>Dễ dàng sử dụng</b></li><li><b>...</b></li></ul>",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Dòng giới thiệu",
+        "Dòng chữ hiễn thị ở đầu trang khi vào trang chủ. Có thể dùng HTML",
+        LAUTH_SETTINGS_TYPE_LARGE_TEXT
+    );
+    lauth_settings_default_register(
+        lauth::$_DEFAULT_SETTINGS,
+        LAUTH_SETTINGS_KEY_SERVER_ADDRESS,
+        "Địa chỉ IP của máy chủ có thể cài đặt tại trang quản trị",
+        LAUTH_SETTINGS_CATEGORY_DEFAULT_ID,
+        "Địa chỉ máy chủ",
+        "Địa chỉ(IP) của máy chủ dùng để cho mọi người biết đến máy chủ của mình"
+    );
+}
+
+/**
+ * Cập nhật cài đặt mặc định của LAuth
+ *
+ * @param $link
+ * @since 1.0
+ */
+function lauth_settings_default_update($link)
+{
+    foreach (lauth::$_DEFAULT_SETTINGS->_TASK as $key => $value) {
+        $name = $key;
+        $val = $value["value"];
+        $category = $value["category"];
+        $string_name = $value["string_name"];
+        $small_text = $value["small_text"];
+        $type = $value["type"];
+        $selection = $value['selection'];
+        lauth_settings_set_default(
+            $link,
+            $name,
+            strval($val),
+            strval($category),
+            strval($string_name),
+            strval($small_text),
+            strval($type),
+            strval($selection)
+        );
+    }
+}
+
+/**
+ *
+ * @param $link lauth_mysql
+ * @param $key
+ * @param string $what
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_settings_get($link, $key, $what = 'value')
+{
+    $_t = LAUTH_TABLE_SETTINGS;
+    $selector = lauth_mysql_select($link, "`{$what}`", $_t, "`key`='{$key}'");
+
+    if ($selector->num_rows <= 0) return null;
+    else return $selector->fetch_assoc()[$what];
+}
+
+/**
+ * Tìm key setting với category.
+ * Trả về null nếu không tìm thấy
+ * Trả về chuỗi là kết quả của những key
+ * trong danh mục thuộc nhóm đó
+ *
+ * @param $link
+ * @param int $category
+ * @return array|null
+ * @since 1.0
+ */
+function lauth_settings_get_keys_by_category($link, $category = LAUTH_SETTINGS_CATEGORY_DEFAULT_ID)
+{
+    $selector = lauth_mysql_select($link, "`key`", LAUTH_TABLE_SETTINGS, "`category` = '{$category}' ");
+    if ($selector->num_rows <= 0) return null;
+    else {
+        $array = [];
+        foreach ($selector->fetch_all() as $value) {
+            array_push($array, $value[0]);
+        }
+        return $array;
+    }
+}
+
+/**
+ * Dùng để đăng ký những cài đặt mặc định trong LAuth
+ *
+ * @param $task lauth_default_settings task default
+ * @param $key string
+ * @param $value
+ * @param $category
+ * @param $string_name
+ * @param $small_text
+ * @param string $type
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_settings_default_register($task, $key, $value, $category, $string_name, $small_text, $type = 'text', $selection = null)
+{
+    return $task->add($key, ["value" => $value, "category" => $category, "string_name" => $string_name, "small_text" => $small_text, "type" => $type, "selection" => $selection]);
+}
+
+/**
+ *
+ * Đăng ký thể loại của cài đặt trong trang quản trị
+ *
+ * @param $task lauth_settings_category
+ * @param $name
+ * @param $string_name
+ * @param $id
+ * @return mixed
+ * @since 1.0
+ */
+function lauth_settings_category_register($task, $name, $string_name, $id)
+{
+    return $task->add($name, [$id, $string_name]);
+}
+
 
 /**
  * Google Analytics Services
- * @since
+ * @since 1.0
  */
 function google_analytics_init() {
     // TODO thêm google analytics api

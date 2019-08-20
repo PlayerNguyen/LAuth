@@ -15,7 +15,6 @@ define("LAUTH_FOLDER_CSS", "css/");
 define("LAUTH_FOLDER_JS", "js/");
 
 define("LAUTH_MODULES_CORE", "lauth_core.php");
-define("LAUTH_MODULES_MYSQL", "lauth_mysql.php");
 
 define("LAUTH_FILE_CSS_DEFAULT", "default.css");
 define("LAUTH_FILE_CSS_ANIMATE", "animate.css");
@@ -35,7 +34,7 @@ define("LAUTH_SETTINGS_DEEP_DEBUG", true);  // TODO thay đổi thành false
  * Tải những modules chính của LAuth
  *
  */
-define("LAUTH_DEFAULT_MODULES", [LAUTH_MODULES_CORE, LAUTH_MODULES_MYSQL]);
+define("LAUTH_DEFAULT_MODULES", [LAUTH_MODULES_CORE]);
 foreach (LAUTH_DEFAULT_MODULES as $MODULE) { require_once(LAUTH_FOLDER_MODULES . $MODULE); }
 
 

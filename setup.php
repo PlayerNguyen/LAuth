@@ -9,8 +9,6 @@
  */
 require_once "includes.php";
 
-require_once "modules/lauth_mysql.php";
-
 ?>
 <!doctype html>
 <html lang="vi">
@@ -92,6 +90,7 @@ require_once "modules/lauth_mysql.php";
                             "`type` VARCHAR(255) NOT NULL DEFAULT 'text'",
                             "`string_name` TEXT NOT NULL",
                             "`small_text` TEXT NOT NULL",
+                            "`selection` TEXT NOT NULL DEFAULT ''",
                             "PRIMARY KEY (`id`)"
                         ]);
 

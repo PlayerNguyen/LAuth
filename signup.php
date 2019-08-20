@@ -44,7 +44,10 @@ require_once "includes.php";
             delay_redirect("index.php", 5);
             return;
         } ?>
-        <?php  ?>
+        <?php if (isset($_POST['signup'])) {
+            $signup = lauth_signup($_POST, lauth::$_MYSQL);
+            display_alert($signup[0], $signup[1]);
+        } ?>
         <h1 class="title-large">Đăng ký</h1>
         <form action="" method="post" class="form">
             <div class="form-group">
@@ -92,8 +95,11 @@ require_once "includes.php";
                 />
             </div>
             <?php if (lauth_recaptcha_is_enabled()) lauth_recaptcha_form_load("signup") ; ?>
+            <div class="form-group">
+                <a class="underline" href="signin.php">Bạn đã có tài khoản?</a>
+            </div>
             <div class="form-group rtl">
-                <button type="submit" class="btn btn-primary">Đăng ký</button>
+                <button type="submit" class="btn btn-primary" name="signup">Đăng ký</button>
             </div>
         </form>
     </div>
